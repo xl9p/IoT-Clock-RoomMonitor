@@ -56,3 +56,6 @@ dkms.conf
 
 firmware/esp32s3/managed_components
 firmware/esp32s3/build
+firmware/esp32s3/serial_monitor_logs
+firmware/esp32s3/main/certs
+Kconfig.projbuild
