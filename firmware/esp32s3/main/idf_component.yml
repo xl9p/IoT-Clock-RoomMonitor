@@ -1,0 +1,11 @@
+dependencies:
+  idf: '>=5.3,<5.5'
+  espressif/arduino-esp32: ^3.2.1
+  BH1750: ^0.0.1
+  Adafruit_TSL2591: ^0.0.1
+  mqtt_module: ^0.0.1
+  wifi_module: ^0.0.1
+  adc_module: ^0.0.1
+  sntp_module: ^0.0.1
+  grid_composer: ^0.0.1
+  cbor_sensor_encoder: ^0.0.1
