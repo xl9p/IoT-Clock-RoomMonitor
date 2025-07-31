@@ -1,0 +1,7 @@
+# component:
+#   name: BME69xLibrary
+#   version: master
+# dependencies:
+#   arduino:
+#     git: https://github.com/xl9p/arduino-esp32.git
+#     version: v3.2_modified
