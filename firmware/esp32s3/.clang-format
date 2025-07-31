@@ -1,0 +1,9 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+ColumnLimit: 130
+AllowShortFunctionsOnASingleLine: None
+BreakBeforeBraces: Attach
+AlwaysBreakAfterReturnType: All
+ReturnTypeIndentation: SameLine
+AlignConsecutiveMacros: true
+AlignTrailingComments: true
