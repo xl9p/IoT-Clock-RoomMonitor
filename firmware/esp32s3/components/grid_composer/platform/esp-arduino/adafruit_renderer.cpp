@@ -14,6 +14,9 @@ adafruit_gfx_draw_figure(void *ctx, const grid_composer_figure_info *info, uint1
 
   ESP_RETURN_ON_FALSE(gfx_ctx->u8g2, ESP_ERR_INVALID_ARG, TAG, "invalid u8g2 renderer");
   ESP_RETURN_ON_FALSE(gfx_ctx->oled, ESP_ERR_INVALID_ARG, TAG, "invalid oled renderer");
+  ESP_RETURN_ON_FALSE(gfx_ctx->tw, ESP_ERR_INVALID_ARG, TAG, "invalid tw object");
+
+  adafruit_pca_select(gfx_ctx->tw, gfx_ctx->idx);
 
   Adafruit_GrayOLED *oled = gfx_ctx->oled;
 
@@ -67,6 +70,9 @@ adafruit_gfx_draw_text(void *ctx, const grid_composer_text_info *info, uint16_t 
 
   ESP_RETURN_ON_FALSE(gfx_ctx->u8g2, ESP_ERR_INVALID_ARG, TAG, "invalid u8g2 renderer");
   ESP_RETURN_ON_FALSE(gfx_ctx->oled, ESP_ERR_INVALID_ARG, TAG, "invalid oled renderer");
+  ESP_RETURN_ON_FALSE(gfx_ctx->tw, ESP_ERR_INVALID_ARG, TAG, "invalid tw object");
+
+  adafruit_pca_select(gfx_ctx->tw, gfx_ctx->idx);
 
   Adafruit_GrayOLED *oled = gfx_ctx->oled;
   U8G2_FOR_ADAFRUIT_GFX *gfx = gfx_ctx->u8g2;
@@ -126,6 +132,9 @@ adafruit_gfx_clear(void *ctx) {
 
   ESP_RETURN_ON_FALSE(gfx_ctx->u8g2, ESP_ERR_INVALID_ARG, TAG, "invalid u8g2 renderer");
   ESP_RETURN_ON_FALSE(gfx_ctx->oled, ESP_ERR_INVALID_ARG, TAG, "invalid oled renderer");
+  ESP_RETURN_ON_FALSE(gfx_ctx->tw, ESP_ERR_INVALID_ARG, TAG, "invalid tw object");
+
+  adafruit_pca_select(gfx_ctx->tw, gfx_ctx->idx);
 
   Adafruit_GrayOLED *oled = gfx_ctx->oled;
   U8G2_FOR_ADAFRUIT_GFX *gfx = gfx_ctx->u8g2;
@@ -135,4 +144,14 @@ adafruit_gfx_clear(void *ctx) {
   oled->clearDisplay();
   oled->display();
   return ESP_OK;
+}
+
+void
+adafruit_pca_select(TwoWire *tw, uint16_t i) {
+  if (i > 7)
+    return;
+
+  tw->beginTransmission(PCA1_ADDR);
+  tw->write(1 << i);
+  tw->endTransmission();
 }

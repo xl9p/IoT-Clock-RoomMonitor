@@ -19,6 +19,7 @@ extern "C" {
 typedef struct {
   Adafruit_GrayOLED *oled;
   U8G2_FOR_ADAFRUIT_GFX *u8g2;
+  TwoWire *tw;
   uint16_t idx;
 } adafruit_renderer_ctx;
 
@@ -28,6 +29,8 @@ esp_err_t
 adafruit_gfx_draw_figure(void *ctx, const grid_composer_figure_info *info, uint16_t color, bool fill);
 esp_err_t
 adafruit_gfx_draw_text(void *ctx, const grid_composer_text_info *info, uint16_t color, bool fill);
+void
+adafruit_pca_select(TwoWire *tw, uint16_t i);
 
 #ifdef __cplusplus
 }

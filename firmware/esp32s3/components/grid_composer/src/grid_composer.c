@@ -133,7 +133,7 @@ task_draw_update(void *arg) {
 
   grid_composer_draw_descriptor draw_desc;
   for (;;) {
-    if (xQueueReceive(grid_composer_inst->draw_queue, &draw_desc, pdMS_TO_TICKS(0U)) == pdTRUE) {
+    if (xQueueReceive(grid_composer_inst->draw_queue, &draw_desc, portMAX_DELAY) == pdTRUE) {
       if (draw_desc.cell_row >= GRID_COMPOSER_CELL_MAX_ROWS || draw_desc.cell_col >= GRID_COMPOSER_CELL_MAX_COLS) {
         ESP_LOGE(TAG, "invalid cell row or column idx");
         continue;
@@ -142,7 +142,7 @@ task_draw_update(void *arg) {
       ESP_ERROR_CHECK_WITHOUT_ABORT(draw(grid_composer_inst->cell_devices[draw_desc.cell_row][draw_desc.cell_col],
                                          &draw_desc.draw_obj, draw_desc.clear_before));
     }
-    vTaskDelay(pdMS_TO_TICKS((uint32_t)(1000 / GRID_COMPOSER_DRAW_TASK_UPDATE_RATE)));
+    // vTaskDelay(pdMS_TO_TICKS((uint32_t)(1000 / GRID_COMPOSER_DRAW_TASK_UPDATE_RATE)));
   }
 }
 
@@ -187,6 +187,7 @@ push_cell(grid_composer_handle composer, struct grid_composer_cell_dev *cell_dev
     for (uint8_t c = 0; c < GRID_COMPOSER_CELL_MAX_COLS; ++c) {
       if (composer->cell_devices[r][c] == NULL) {
         composer->cell_devices[r][c] = cell_dev;
+        ESP_LOGI(TAG, "Added sell at pos: %u %u", r, c);
         return ESP_OK;
       }
     }
