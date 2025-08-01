@@ -39,6 +39,8 @@
 #include "sntp_module.h"
 #include "wifi_module.h"
 
+#include "app_errors.h"
+
 #define SENSOR_ID "clock1"
 
 #define I2C_SCL_BUS0  GPIO_NUM_1
@@ -60,7 +62,7 @@
 #define ADC_SOUND_SENSOR_REPORT_PERIOD_MS    4000U
 
 #define TSL2591_TASK_PERIOD_MS   2800U
-#define TSL2591_CALC_PERIOD_MS   3600U * 1000U * 12U
+#define TSL2591_CALC_PERIOD_MS   3600U * 1000U * 1U
 #define TSL2591_REPORT_PERIOD_MS 2800U
 #define TSL2591_ADDR             0x29U
 
@@ -71,11 +73,11 @@
 #define SH1106_1_IDX          0U
 #define SH1106_2_IDX          1U
 #define SH1106_3_IDX          2U
+#define SH1106_4_IDX          3U
 #define SH1106_SCREEN_WIDTH   128U
 #define SH1106_SCREEN_HEIGHT  64U
 #define SH1106_OLED_RESET     -1
 #define SH1106_SCREEN_ADDRESS 0x3CU
-#define SH1106_PCA1_ADDR      0x70U
 
 #define SNTP_SERVER_1         "sth1.ntp.se"
 #define SNTP_SYNC_WAIT_MS     40000U
@@ -97,29 +99,12 @@
 #define DATA_AGGREGATION_MAX_PAYLOADS       15U
 #define DATA_AGGREGATION_CBOR_OVERHEAD_COEF 1.2f /* Assuming 20% overhead */
 
-#define ESP_ERR_MAIN_APP_BASE                0x8000U
-#define ESP_ERR_MAIN_APP_BME690_FAIL         (ESP_ERR_MAIN_APP_BASE + 1U)
-#define ESP_ERR_MAIN_APP_BME690_BSEC_FAIL    (ESP_ERR_MAIN_APP_BASE + 2U)
-#define ESP_ERR_MAIN_APP_I2C_FAIL            (ESP_ERR_MAIN_APP_BASE + 3U)
-#define ESP_ERR_MAIN_APP_ADC_FAIL            (ESP_ERR_MAIN_APP_BASE + 4U)
-#define ESP_ERR_MAIN_APP_WIFI_FAIL           (ESP_ERR_MAIN_APP_BASE + 5U)
-#define ESP_ERR_MAIN_APP_MQTT_FAIL           (ESP_ERR_MAIN_APP_BASE + 6U)
-#define ESP_ERR_MAIN_APP_SNTP_FAIL           (ESP_ERR_MAIN_APP_BASE + 7U)
-#define ESP_ERR_MAIN_APP_GRID_COMPOSER_FAIL  (ESP_ERR_MAIN_APP_BASE + 8U)
-#define ESP_ERR_MAIN_APP_SH1106_DISPLAY_FAIL (ESP_ERR_MAIN_APP_BASE + 9U)
-#define ESP_ERR_MAIN_APP_TSL2591_FAIL        (ESP_ERR_MAIN_APP_BASE + 10U)
-
 #define TASK_QUEUE_SEND_TIMEOUT_MS 1000U
 
 typedef struct {
   uint8_t buffer[(uint32_t)(MQTT_MAX_MESSAGE_SIZE * DATA_AGGREGATION_CBOR_OVERHEAD_COEF)];
   uint32_t length;
 } mqtt_message;
-
-typedef struct {
-  adafruit_renderer_ctx renderer_ctx;
-  TwoWire *tw;
-} draw_wrapper_ctx;
 
 BME69x bme690;
 BSEC3 bme690_bsec;
@@ -131,16 +116,20 @@ adc_dev_handle adc_sound_sens;
 Adafruit_SH1106G sh1106_1 = Adafruit_SH1106G(SH1106_SCREEN_WIDTH, SH1106_SCREEN_HEIGHT, &Wire, SH1106_OLED_RESET);
 Adafruit_SH1106G sh1106_2 = Adafruit_SH1106G(SH1106_SCREEN_WIDTH, SH1106_SCREEN_HEIGHT, &Wire, SH1106_OLED_RESET);
 Adafruit_SH1106G sh1106_3 = Adafruit_SH1106G(SH1106_SCREEN_WIDTH, SH1106_SCREEN_HEIGHT, &Wire, SH1106_OLED_RESET);
+Adafruit_SH1106G sh1106_4 = Adafruit_SH1106G(SH1106_SCREEN_WIDTH, SH1106_SCREEN_HEIGHT, &Wire, SH1106_OLED_RESET);
 
 U8G2_FOR_ADAFRUIT_GFX u8g2_1;
 U8G2_FOR_ADAFRUIT_GFX u8g2_2;
 U8G2_FOR_ADAFRUIT_GFX u8g2_3;
+U8G2_FOR_ADAFRUIT_GFX u8g2_4;
+
+// Can be malloc'ed
+adafruit_renderer_ctx ad_ctx_1;
+adafruit_renderer_ctx ad_ctx_2;
+adafruit_renderer_ctx ad_ctx_3;
+adafruit_renderer_ctx ad_ctx_4;
 
 grid_composer_handle grid_composer;
-// Could be malloc'ed but too lazy to manage lifetimes
-draw_wrapper_ctx wrap_ctx1;
-draw_wrapper_ctx wrap_ctx2;
-draw_wrapper_ctx wrap_ctx3;
 
 mqtt_module_handle mqtt_module;
 
@@ -163,15 +152,6 @@ QueueHandle_t mqtt_filled_queue;
 mqtt_message mqtt_buffers[MQTT_BUFFER_COUNT];
 
 static const char *TAG = "clock_room_monitor_app";
-
-void
-pca_select(TwoWire *tw, uint16_t i);
-esp_err_t
-draw_text_wrapper(void *ctx, const grid_composer_text_info *info, uint16_t color, bool fill);
-esp_err_t
-draw_figure_wrapper(void *ctx, const grid_composer_figure_info *info, uint16_t color, bool fill);
-esp_err_t
-clear_wrapper(void *ctx);
 
 esp_err_t
 init_i2c();
@@ -399,26 +379,25 @@ esp_err_t
 init_sh1106_n() {
   esp_err_t ret = ESP_OK;
 
-  pca_select(&Wire, SH1106_1_IDX);
+  adafruit_pca_select(&Wire, SH1106_1_IDX);
   ESP_RETURN_ON_FALSE(sh1106_1.begin(SH1106_SCREEN_ADDRESS, true), ESP_ERR_MAIN_APP_SH1106_DISPLAY_FAIL, TAG,
                       "Failed to initialize SH1106 num 1");
-  sh1106_1.clearDisplay();
-  sh1106_1.display();
   ESP_LOGI(TAG, "Initialized SH1106 num 1");
 
-  pca_select(&Wire, SH1106_2_IDX);
+  adafruit_pca_select(&Wire, SH1106_2_IDX);
   ESP_RETURN_ON_FALSE(sh1106_2.begin(SH1106_SCREEN_ADDRESS, true), ESP_ERR_MAIN_APP_SH1106_DISPLAY_FAIL, TAG,
                       "Failed to initialize SH1106 num 2");
-  sh1106_2.clearDisplay();
-  sh1106_2.display();
   ESP_LOGI(TAG, "Initialized SH1106 num 2");
 
-  pca_select(&Wire, SH1106_3_IDX);
+  adafruit_pca_select(&Wire, SH1106_3_IDX);
   ESP_RETURN_ON_FALSE(sh1106_3.begin(SH1106_SCREEN_ADDRESS, true), ESP_ERR_MAIN_APP_SH1106_DISPLAY_FAIL, TAG,
                       "Failed to initialize SH1106 num 3");
-  sh1106_2.clearDisplay();
-  sh1106_2.display();
   ESP_LOGI(TAG, "Initialized SH1106 num 3");
+
+  adafruit_pca_select(&Wire, SH1106_4_IDX);
+  ESP_RETURN_ON_FALSE(sh1106_4.begin(SH1106_SCREEN_ADDRESS, true), ESP_ERR_MAIN_APP_SH1106_DISPLAY_FAIL, TAG,
+                      "Failed to initialize SH1106 num 4");
+  ESP_LOGI(TAG, "Initialized SH1106 num 4");
 
   u8g2_1.begin(sh1106_1);
   ESP_LOGI(TAG, "Initialized u8g2 for SH1106 num 1");
@@ -429,58 +408,67 @@ init_sh1106_n() {
   u8g2_3.begin(sh1106_3);
   ESP_LOGI(TAG, "Initialized u8g2 for SH1106 num 3");
 
+  u8g2_4.begin(sh1106_4);
+  ESP_LOGI(TAG, "Initialized u8g2 for SH1106 num 4");
+
   return ret;
 }
 esp_err_t
 init_grid() {
   esp_err_t ret = ESP_OK;
 
-  wrap_ctx1 = {
-      .renderer_ctx =
-          {
-              .oled = &sh1106_1,
-              .u8g2 = &u8g2_1,
-              .idx = SH1106_1_IDX,
-          },
+  ad_ctx_1 = {
+      .oled = &sh1106_1,
+      .u8g2 = &u8g2_1,
+      .tw = &Wire,
+      .idx = SH1106_1_IDX,
   };
-  wrap_ctx1.tw = &Wire;
+
   grid_composer_renderer renderer1 = {
-      .user_ctx = &wrap_ctx1,
-      .draw_text = draw_text_wrapper,
-      .draw_figure = draw_figure_wrapper,
-      .clear = clear_wrapper,
+      .user_ctx = &ad_ctx_1,
+      .draw_text = adafruit_gfx_draw_text,
+      .draw_figure = adafruit_gfx_draw_figure,
+      .clear = adafruit_gfx_clear,
   };
 
-  wrap_ctx2 = {
-      .renderer_ctx =
-          {
-              .oled = &sh1106_2,
-              .u8g2 = &u8g2_2,
-              .idx = SH1106_2_IDX,
-          },
+  ad_ctx_2 = {
+      .oled = &sh1106_2,
+      .u8g2 = &u8g2_2,
+      .tw = &Wire,
+      .idx = SH1106_2_IDX,
+
   };
-  wrap_ctx2.tw = &Wire;
   grid_composer_renderer renderer2 = {
-      .user_ctx = &wrap_ctx2,
-      .draw_text = draw_text_wrapper,
-      .draw_figure = draw_figure_wrapper,
-      .clear = clear_wrapper,
+      .user_ctx = &ad_ctx_2,
+      .draw_text = adafruit_gfx_draw_text,
+      .draw_figure = adafruit_gfx_draw_figure,
+      .clear = adafruit_gfx_clear,
   };
 
-  wrap_ctx3 = {
-      .renderer_ctx =
-          {
-              .oled = &sh1106_3,
-              .u8g2 = &u8g2_3,
-              .idx = SH1106_3_IDX,
-          },
+  ad_ctx_3 = {
+      .oled = &sh1106_3,
+      .u8g2 = &u8g2_3,
+      .tw = &Wire,
+      .idx = SH1106_3_IDX,
   };
-  wrap_ctx3.tw = &Wire;
   grid_composer_renderer renderer3 = {
-      .user_ctx = &wrap_ctx3,
-      .draw_text = draw_text_wrapper,
-      .draw_figure = draw_figure_wrapper,
-      .clear = clear_wrapper,
+      .user_ctx = &ad_ctx_3,
+      .draw_text = adafruit_gfx_draw_text,
+      .draw_figure = adafruit_gfx_draw_figure,
+      .clear = adafruit_gfx_clear,
+  };
+
+  ad_ctx_4 = {
+      .oled = &sh1106_4,
+      .u8g2 = &u8g2_4,
+      .tw = &Wire,
+      .idx = SH1106_4_IDX,
+  };
+  grid_composer_renderer renderer4 = {
+      .user_ctx = &ad_ctx_4,
+      .draw_text = adafruit_gfx_draw_text,
+      .draw_figure = adafruit_gfx_draw_figure,
+      .clear = adafruit_gfx_clear,
   };
 
   ESP_RETURN_ON_ERROR(grid_composer_init(&grid_composer), TAG, "Failed to initialize grid composer");
@@ -488,6 +476,12 @@ init_grid() {
   ESP_RETURN_ON_ERROR(grid_composer_add_cell(grid_composer, &renderer1), TAG, "Failed to add a cell device 1");
   ESP_RETURN_ON_ERROR(grid_composer_add_cell(grid_composer, &renderer2), TAG, "Failed to add a cell device 2");
   ESP_RETURN_ON_ERROR(grid_composer_add_cell(grid_composer, &renderer3), TAG, "Falied to add a cell device 3");
+  ESP_RETURN_ON_ERROR(grid_composer_add_cell(grid_composer, &renderer4), TAG, "Falied to add a cell device 4");
+
+  adafruit_gfx_clear(&ad_ctx_1);
+  adafruit_gfx_clear(&ad_ctx_2);
+  adafruit_gfx_clear(&ad_ctx_3);
+  adafruit_gfx_clear(&ad_ctx_4);
 
   return ret;
 }
@@ -580,6 +574,9 @@ task_sound_sampling(void *arg) {
 
   uint32_t samples_read = 0U;
 
+  char rms_text[32];
+  char max_text[32];
+  char min_text[32];
   float rms_value = 0.0f;
   float rms_max_value = 0.0f;
   float rms_min_value = 0.0f;
@@ -648,7 +645,23 @@ task_sound_sampling(void *arg) {
       } else {
         ESP_LOGI(TAG, "Sent data from sound sensor task");
       }
-      // Send to display_data queue
+
+      snprintf(rms_text, sizeof(rms_text), "Sound RMS:%.1f", rms_value);
+      grid_composer_draw_descriptor draw_desc_lux = GRID_COMPOSER_TEXT_DESCRIPTOR(
+          0U, 2U, 0U, 0U, GRID_COMPOSER_V_ALIGN_TOP, GRID_COMPOSER_H_ALIGN_LEFT, rms_text, u8g2_font_7x14_tf, SH110X_WHITE, true);
+      ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_lux, 1000U));
+
+      snprintf(min_text, sizeof(min_text), "Min:%.1f", rms_min_value);
+      grid_composer_draw_descriptor draw_desc_min =
+          GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 2U, 0U, 24U, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_LEFT, min_text,
+                                        u8g2_font_7x14_tf, SH110X_WHITE, false);
+      ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_min, 1000U));
+
+      snprintf(max_text, sizeof(max_text), "Max:%.1f", rms_max_value);
+      grid_composer_draw_descriptor draw_desc_max =
+          GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 2U, 0U, 48U, GRID_COMPOSER_V_ALIGN_BOTTOM, GRID_COMPOSER_H_ALIGN_LEFT, max_text,
+                                        u8g2_font_7x14_tf, SH110X_WHITE, false);
+      ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_max, 1000U));
     }
 
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
@@ -661,6 +674,10 @@ task_tsl2591_sampling(void *arg) {
   strncpy(payload.sensor, "tsl2591", SENSOR_NAME_MAX_LEN - 1);
   payload.sensor[SENSOR_NAME_MAX_LEN - 1] = '\0';
 
+  char lux_text[32];
+  char max_text[32];
+  char min_text[32];
+  float lux = 0.0f;
   float max_lux = 0.0f;
   float min_lux = 0.0f;
 
@@ -677,7 +694,7 @@ task_tsl2591_sampling(void *arg) {
     uint32_t ir = lum >> 16;
     uint32_t full = lum & 0xFFFF;
 
-    float lux = tsl2591.calculateLux(full, ir);
+    lux = tsl2591.calculateLux(full, ir);
 
     uint64_t curr_timestamp_us = (uint64_t)esp_timer_get_time();
     if ((curr_timestamp_us - prev_calc_timestamp_us) >= calc_period_us) {
@@ -721,7 +738,22 @@ task_tsl2591_sampling(void *arg) {
       }
     }
 
-    // Send to display_data queue
+    snprintf(lux_text, sizeof(lux_text), "Lux:%.1f", lux);
+    grid_composer_draw_descriptor draw_desc_lux = GRID_COMPOSER_TEXT_DESCRIPTOR(
+        0U, 1U, 0U, 0U, GRID_COMPOSER_V_ALIGN_TOP, GRID_COMPOSER_H_ALIGN_LEFT, lux_text, u8g2_font_7x14_tf, SH110X_WHITE, true);
+    ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_lux, 1000U));
+
+    snprintf(min_text, sizeof(min_text), "Min:%.1f", min_lux);
+    grid_composer_draw_descriptor draw_desc_min =
+        GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 1U, 0U, 24U, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_LEFT, min_text,
+                                      u8g2_font_7x14_tf, SH110X_WHITE, false);
+    ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_min, 1000U));
+
+    snprintf(max_text, sizeof(max_text), "Max:%.1f", max_lux);
+    grid_composer_draw_descriptor draw_desc_max =
+        GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 1U, 0U, 48U, GRID_COMPOSER_V_ALIGN_BOTTOM, GRID_COMPOSER_H_ALIGN_LEFT, max_text,
+                                      u8g2_font_7x14_tf, SH110X_WHITE, false);
+    ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_max, 1000U));
 
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
   }
@@ -821,21 +853,22 @@ task_bme690_sampling(void *arg) {
       }
 
       snprintf(temp_text, sizeof(temp_text), "Temperature:%.1f", temp);
-      grid_composer_draw_descriptor draw_desc_temp = GRID_COMPOSER_TEXT_DESCRIPTOR(
-          0, 1, 0, 0, GRID_COMPOSER_V_ALIGN_TOP, GRID_COMPOSER_H_ALIGN_LEFT, temp_text, u8g2_font_7x14_tf, SH110X_WHITE, true);
+      grid_composer_draw_descriptor draw_desc_temp =
+          GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 0U, 0U, 0U, GRID_COMPOSER_V_ALIGN_TOP, GRID_COMPOSER_H_ALIGN_LEFT, temp_text,
+                                        u8g2_font_7x14_tf, SH110X_WHITE, true);
       ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_temp, 1000U));
       // memset(t_text, 0, sizeof(t_text));
 
       snprintf(humid_text, sizeof(humid_text), "Humidity:%.1f", humid);
       grid_composer_draw_descriptor draw_desc_humid =
-          GRID_COMPOSER_TEXT_DESCRIPTOR(0, 1, 0, 24, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_LEFT, humid_text,
+          GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 0U, 0U, 24U, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_LEFT, humid_text,
                                         u8g2_font_7x14_tf, SH110X_WHITE, false);
       ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_humid, 1000U));
       // memset(t_text, 0, sizeof(t_text));
 
       snprintf(iaq_text, sizeof(iaq_text), "IAQ Index:%.1f", iaq);
       grid_composer_draw_descriptor draw_desc_iaq =
-          GRID_COMPOSER_TEXT_DESCRIPTOR(0, 1, 0, 48, GRID_COMPOSER_V_ALIGN_BOTTOM, GRID_COMPOSER_H_ALIGN_LEFT, iaq_text,
+          GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 0U, 0U, 48U, GRID_COMPOSER_V_ALIGN_BOTTOM, GRID_COMPOSER_H_ALIGN_LEFT, iaq_text,
                                         u8g2_font_7x14_tf, SH110X_WHITE, false);
 
       ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_iaq, 1000U));
@@ -885,8 +918,8 @@ task_sntp_sampling(void *arg) {
 
       sprintf(t_text, "%02i:%02i", timeinfo.tm_hour, timeinfo.tm_min);
       grid_composer_draw_descriptor draw_desc =
-          GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 0U, 0U, 0U, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_CENTER, t_text,
-                                        u8g2_font_10x20_tn, SH110X_WHITE, true);
+          GRID_COMPOSER_TEXT_DESCRIPTOR(1U, 0U, 0U, 0U, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_CENTER, t_text,
+                                        u8g2_font_logisoso22_tn, SH110X_WHITE, true);
       ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc, 1000U));
     }
 
@@ -950,12 +983,13 @@ task_mqtt_sending(void *arg) {
     if (xQueueReceive(mqtt_filled_queue, &msg, portMAX_DELAY) == pdTRUE) {
       ret = mqtt_module_publish(mqtt_module, MQTT_DATA_OUT_TOPIC, (char *)msg->buffer, msg->length, 0, 0);
       if (ESP_ERR_INVALID_STATE == ret) {
-        // wifi_module_stop();
+        ESP_ERROR_CHECK_WITHOUT_ABORT(wifi_module_stop());
+        ESP_ERROR_CHECK_WITHOUT_ABORT(wifi_module_start());
         // wifi_module_start();
         // mqtt_module_del(mqtt_module);
         // init_mqtt();
 
-        mqtt_module_connect(mqtt_module, (uint32_t)portMAX_DELAY);
+        mqtt_module_reconnect(mqtt_module, (uint32_t)portMAX_DELAY);
       }
 
       memset(msg->buffer, 0, sizeof(msg->buffer));
@@ -992,39 +1026,4 @@ mqtt_data_event_handler(mqtt_module_handle mqtt_module, int32_t event_id, esp_mq
   ESP_LOGI(TAG, "Received on %.*s; Content: %.*s", event_handle->topic_len, event_handle->topic, event_handle->data_len,
            event_handle->data);
   return ret;
-}
-
-void
-pca_select(TwoWire *tw, uint16_t i) {
-  if (i > 7)
-    return;
-
-  tw->beginTransmission(SH1106_PCA1_ADDR);
-  tw->write(1 << i);
-  tw->endTransmission();
-}
-esp_err_t
-draw_text_wrapper(void *ctx, const grid_composer_text_info *info, uint16_t color, bool fill) {
-  draw_wrapper_ctx *wrap_ctx = (draw_wrapper_ctx *)ctx;
-  adafruit_renderer_ctx *gfx_ctx = &wrap_ctx->renderer_ctx;
-
-  pca_select(wrap_ctx->tw, wrap_ctx->renderer_ctx.idx);
-
-  return adafruit_gfx_draw_text(gfx_ctx, info, color, fill);
-}
-esp_err_t
-draw_figure_wrapper(void *ctx, const grid_composer_figure_info *info, uint16_t color, bool fill) {
-  draw_wrapper_ctx *wrap_ctx = (draw_wrapper_ctx *)ctx;
-  adafruit_renderer_ctx *gfx_ctx = &wrap_ctx->renderer_ctx;
-
-  pca_select(wrap_ctx->tw, wrap_ctx->renderer_ctx.idx);
-  return adafruit_gfx_draw_figure(gfx_ctx, info, color, fill);
-}
-esp_err_t
-clear_wrapper(void *ctx) {
-  draw_wrapper_ctx *wrap_ctx = (draw_wrapper_ctx *)ctx;
-  adafruit_renderer_ctx *gfx_ctx = &wrap_ctx->renderer_ctx;
-
-  pca_select(wrap_ctx->tw, wrap_ctx->renderer_ctx.idx);
-  return adafruit_gfx_clear(gfx_ctx);
 }
