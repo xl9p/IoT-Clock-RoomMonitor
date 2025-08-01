@@ -1,0 +1,32 @@
+[submodule "firmware/esp32s3/components/Adafruit_BusIO"]
+	path = firmware/esp32s3/components/Adafruit_BusIO
+	url = git@github.com:xl9p/Adafruit_BusIO.git
+	branch = modified
+[submodule "firmware/esp32s3/components/BME69xLibrary"]
+	path = firmware/esp32s3/components/BME69xLibrary
+	url = git@github.com:xl9p/BME69xLibrary.git
+	branch = main
+[submodule "firmware/esp32s3/components/BSEC3Library"]
+	path = firmware/esp32s3/components/BSEC3Library
+	url = git@github.com:xl9p/BSEC2Library.git
+	branch = BSEC3
+[submodule "firmware/esp32s3/components/Adafruit_SH110x"]
+	path = firmware/esp32s3/components/Adafruit_SH110x
+	url = git@github.com:xl9p/Adafruit_SH110x.git
+	branch = modified
+[submodule "firmware/esp32s3/components/Adafruit-GFX-Library"]
+	path = firmware/esp32s3/components/Adafruit-GFX-Library
+	url = git@github.com:xl9p/Adafruit-GFX-Library.git
+	branch = modified
+[submodule "firmware/esp32s3/components/Adafruit_Sensor"]
+	path = firmware/esp32s3/components/Adafruit_Sensor
+	url = git@github.com:xl9p/Adafruit_Sensor.git
+	branch = modified
+[submodule "firmware/esp32s3/components/Adafruit_TSL2591"]
+	path = firmware/esp32s3/components/Adafruit_TSL2591
+	url = git@github.com:xl9p/Adafruit_TSL2591_Library.git
+	branch = modified
+[submodule "firmware/esp32s3/components/U8g2_for_Adafruit_GFX"]
+	path = firmware/esp32s3/components/U8g2_for_Adafruit_GFX
+	url = git@github.com:xl9p/U8g2_for_Adafruit_GFX.git
+	branch = modified

@@ -1,3 +1,0 @@
-[submodule "src/bme69x"]
-	path = src/bme69x
-	url = git@github.com:xl9p/BME690_SensorAPI.git
