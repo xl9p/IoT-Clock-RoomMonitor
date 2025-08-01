@@ -28,6 +28,7 @@ struct wifi_sta_ctx {
   enum wifi_module_sta_state state;
   uint32_t current_retries;
   uint32_t max_retries;
+  bool disconnect_requested;
 
   esp_netif_t *netif;
 };
@@ -203,7 +204,19 @@ wifi_module_start() {
 }
 esp_err_t
 wifi_module_stop() {
-  esp_err_t ret = ESP_ERR_NOT_SUPPORTED;
+  esp_err_t ret = ESP_OK;
+  ESP_RETURN_ON_FALSE(wifi_module_global.state == WIFI_MODULE_STATE_RUNNING &&
+                          (wifi_module_global.ap_ctx.enabled || wifi_module_global.sta_ctx.enabled),
+                      ESP_ERR_INVALID_STATE, TAG, "invalid state");
+
+  wifi_module_global.sta_ctx.disconnect_requested = true;
+  ESP_RETURN_ON_ERROR(esp_wifi_disconnect(), TAG, "failed to disconnect from wifi AP");
+  ESP_RETURN_ON_ERROR(esp_wifi_stop(), TAG, "failed to disable wifi");
+
+  update_sta_state(&wifi_module_global, WIFI_MODULE_STA_STATE_DISCONNECTED);
+  update_ap_state(&wifi_module_global, WIFI_MODULE_AP_STATE_STOPPED);
+  update_module_state(&wifi_module_global, WIFI_MODULE_STATE_STOPPED);
+
   return ret;
 }
 
@@ -357,7 +370,12 @@ on_sta_disconnected_event_handler(void *event_handler_arg, esp_event_base_t even
   uint32_t curr_retries = wifi_module_global.sta_ctx.current_retries;
   uint32_t max_retries = wifi_module_global.sta_ctx.max_retries;
 
-  if (curr_retries < max_retries) {
+  if (wifi_module_global.sta_ctx.disconnect_requested) {
+    wifi_module_global.sta_ctx.disconnect_requested = false;
+    return;
+  }
+
+  if ((curr_retries < max_retries)) {
     esp_wifi_connect();
     ESP_LOGD(TAG, "retry to connect to the AP, tries %lu/%lu", curr_retries, max_retries);
     wifi_module_global.sta_ctx.current_retries++;
