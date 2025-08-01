@@ -590,6 +590,6 @@ direct_dependencies:
 - espressif/sntp_module
 - espressif/wifi_module
 - idf
-manifest_hash: eb9b64f984f71c7b7e9824eef2deb0a2229b862e4eef1293d82d1771d318efb5
+manifest_hash: 05ef31ed790791db544ca02b7d9c197ebca1baaddf725d8c3c8bc7c0a751595f
 target: esp32s3
 version: 2.0.0
