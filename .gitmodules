@@ -30,3 +30,11 @@
 	path = firmware/esp32s3/components/U8g2_for_Adafruit_GFX
 	url = git@github.com:xl9p/U8g2_for_Adafruit_GFX.git
 	branch = modified
+[submodule "firmware/esp32s3/components/Adafruit-BMP180-Library"]
+	path = firmware/esp32s3/components/Adafruit-BMP180-Library
+	url = git@github.com:xl9p/Adafruit-BMP085-Library.git
+	branch = modified
+[submodule "firmware/esp32s3/components/DHT-Sensor-Library"]
+	path = firmware/esp32s3/components/DHT-Sensor-Library
+	url = git@github.com:xl9p/DHT-sensor-library.git
+	branch = modified
