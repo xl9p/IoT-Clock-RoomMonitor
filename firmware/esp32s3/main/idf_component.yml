@@ -6,6 +6,7 @@ dependencies:
   Adafruit_BusIO: ^0.0.1
   Adafruit_Sensor: ^0.0.1
   Adafruit_TSL2591: ^0.0.1
+  Adafruit-BMP180-Library: ^0.0.1
   Adafruit_SH110x: ^0.0.1
   Adafruit-GFX-Library: ^0.0.1
   U8g2_for_Adafruit_GFX: ^0.0.1

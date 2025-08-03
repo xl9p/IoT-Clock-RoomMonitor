@@ -1,5 +1,6 @@
-#include <math.h>
-#include <stdio.h>
+#include "float.h"
+#include "math.h"
+#include "stdio.h"
 
 #include "sdkconfig.h"
 
@@ -28,6 +29,10 @@
 #include "BSEC3.h"
 #include "bme69xLibrary.h"
 #include "bsecConfig/bsec_iaq.h"
+
+#include "Adafruit_BMP085.h"
+
+#include "DHT.h"
 
 #include "adafruit_renderer.h"
 #include "grid_composer.h"
@@ -58,17 +63,18 @@
 #define ADC_SOUND_SENSOR_READ_SAMPLES        25U
 #define ADC_SOUND_SENSOR_DC_OFFSET_MV        1650U
 #define ADC_SOUND_SENSOR_TASK_PERIOD_MS      100U
+#define ADC_SOUND_SENSOR_MINMAX_PERIOD_MS    3600U * 1000U * 1U
 #define ADC_SOUND_SENSOR_CALC_PERIOD_MS      4000U
 #define ADC_SOUND_SENSOR_REPORT_PERIOD_MS    4000U
 
 #define TSL2591_TASK_PERIOD_MS   2800U
-#define TSL2591_CALC_PERIOD_MS   3600U * 1000U * 1U
+#define TSL2591_MINMAX_PERIOD_MS 3600U * 1000U * 1U
 #define TSL2591_REPORT_PERIOD_MS 2800U
-#define TSL2591_ADDR             0x29U
+#define TSL2591_I2C_ADDRESS      0x29U
 
-#define BME690_TASK_PERIOD_MS   (uint32_t)(1000.0f / (BSEC_SAMPLE_RATE_LP * 2.0f))
-#define BME690_REPORT_PERIOD_MS (uint32_t)(1000.0f / (BSEC_SAMPLE_RATE_LP * 2.0f))
-#define BME690_I2C_ADDRESS      0x76U
+#define AIR_QUALITY_TASK_PERIOD_MS   (uint32_t)(1000.0f / (BSEC_SAMPLE_RATE_LP * 2.0f))
+#define AIR_QUALITY_REPORT_PERIOD_MS (uint32_t)(1000.0f / (BSEC_SAMPLE_RATE_LP * 2.0f))
+#define BME690_I2C_ADDRESS           0x76U
 
 #define SH1106_1_IDX          0U
 #define SH1106_2_IDX          1U
@@ -89,7 +95,7 @@
 #define WIFI_MAXIMUM_RETRY 5U
 
 #define MQTT_SERVER           "192.168.0.124"
-#define MQTT_PORT             1883U
+#define MQTT_PORT             8884U
 #define MQTT_USERNAME         "esp32_1"
 #define MQTT_PASSWORD         "Test12345"
 #define MQTT_DATA_OUT_TOPIC   "/IoT-Clock-RoomMonitor/DEVICE_OUT/DATA"
@@ -105,6 +111,15 @@ typedef struct {
   uint8_t buffer[(uint32_t)(MQTT_MAX_MESSAGE_SIZE * DATA_AGGREGATION_CBOR_OVERHEAD_COEF)];
   uint32_t length;
 } mqtt_message;
+
+extern const uint8_t client_crt_start[] asm("_binary_client_crt_start");
+extern const uint8_t client_crt_end[] asm("_binary_client_crt_end");
+extern const uint8_t client_key_start[] asm("_binary_client_key_start");
+extern const uint8_t client_key_end[] asm("_binary_client_key_end");
+extern const uint8_t root_cert_pem_start[] asm("_binary_rootCA_pem_start");
+extern const uint8_t root_cert_pem_end[] asm("_binary_rootCA_pem_end");
+
+Adafruit_BMP085 bmp180;
 
 BME69x bme690;
 BSEC3 bme690_bsec;
@@ -136,7 +151,7 @@ mqtt_module_handle mqtt_module;
 uint64_t boot_to_utc_offset_us;
 
 TaskHandle_t task_sound_sampling_handle;
-TaskHandle_t task_bme690_sampling_handle;
+TaskHandle_t task_air_quality_sampling_handle;
 TaskHandle_t task_tsl2591_sampling_handle;
 TaskHandle_t task_sntp_sampling_handle;
 
@@ -159,6 +174,8 @@ init_i2c();
 esp_err_t
 init_bme690();
 esp_err_t
+init_bmp180();
+esp_err_t
 init_bsec();
 esp_err_t
 init_adc_sound_sensor();
@@ -179,7 +196,7 @@ init_mqtt();
 void
 task_sound_sampling(void *arg);
 void
-task_bme690_sampling(void *arg);
+task_air_quality_sampling(void *arg);
 void
 task_tsl2591_sampling(void *arg);
 void
@@ -195,7 +212,7 @@ mqtt_data_event_handler(mqtt_module_handle mqtt_module, int32_t event_id, esp_mq
 
 extern "C" void
 app_main() {
-  initArduino();
+  // initArduino();
   vTaskDelay(pdMS_TO_TICKS(1000));
 
   esp_err_t ret = nvs_flash_init();
@@ -219,6 +236,8 @@ app_main() {
 
   init_bme690();
   init_bsec();
+
+  init_bmp180();
 
   init_tsl2591();
 
@@ -251,7 +270,7 @@ app_main() {
   xTaskCreatePinnedToCore(task_mqtt_sending, "mqtt tsk", 8196U, NULL, 9, &task_mqtt_sending_handle, 1U);
   xTaskCreatePinnedToCore(task_sensor_data_aggregation, "aggr tsk", 6144U, NULL, 8, &task_sensor_data_aggregation_handle, 0U);
 
-  xTaskCreatePinnedToCore(task_bme690_sampling, "bme690 tsk", 3144U, NULL, 6, &task_bme690_sampling_handle, 0U);
+  xTaskCreatePinnedToCore(task_air_quality_sampling, "bme690 tsk", 3144U, NULL, 6, &task_air_quality_sampling_handle, 0U);
   vTaskDelay(pdMS_TO_TICKS(10U * (task_jitter_random[0] & 0x00000001)));
   xTaskCreatePinnedToCore(task_tsl2591_sampling, "tsl2591 tsk", 3144U, NULL, 6, &task_tsl2591_sampling_handle, 0U);
   vTaskDelay(pdMS_TO_TICKS(10U * (task_jitter_random[1] & 0x00000001)));
@@ -348,6 +367,16 @@ init_bme690() {
   return ret;
 }
 esp_err_t
+init_bmp180() {
+  esp_err_t ret = ESP_OK;
+
+  ESP_RETURN_ON_FALSE(bmp180.begin(BMP085_ULTRAHIGHRES, &Wire), ESP_ERR_MAIN_APP_BMP180_FAIL, TAG,
+                      "Failed to initialize BMP180 sensor");
+  ESP_LOGI(TAG, "Initialized BMP180");
+
+  return ret;
+}
+esp_err_t
 init_adc_sound_sensor() {
   esp_err_t ret = ESP_OK;
 
@@ -368,7 +397,7 @@ init_adc_sound_sensor() {
 esp_err_t
 init_tsl2591() {
   esp_err_t ret = ESP_OK;
-  ESP_RETURN_ON_FALSE(tsl2591.begin(&Wire, TSL2591_ADDR), ESP_ERR_MAIN_APP_TSL2591_FAIL, TAG,
+  ESP_RETURN_ON_FALSE(tsl2591.begin(&Wire, TSL2591_I2C_ADDRESS), ESP_ERR_MAIN_APP_TSL2591_FAIL, TAG,
                       "Failed to initialize TSL2591 sensor");
   tsl2591.setGain(TSL2591_GAIN_HIGH);
   tsl2591.setTiming(TSL2591_INTEGRATIONTIME_400MS);
@@ -535,9 +564,9 @@ init_mqtt() {
   esp_err_t ret = ESP_OK;
 
   mqtt_module_init(&mqtt_module);
-  struct mqtt_address_config addr_cfg = {
+  mqtt_address_config addr_cfg = {
       .hostname = MQTT_SERVER,
-      .transport = MQTT_TRANSPORT_OVER_TCP,
+      .transport = MQTT_TRANSPORT_OVER_SSL,
       .path = "/",
       .port = MQTT_PORT,
   };
@@ -545,16 +574,23 @@ init_mqtt() {
   ESP_ERROR_CHECK_WITHOUT_ABORT(mqtt_module_register_event_handler(mqtt_module, MQTT_MODULE_DATA_EVENT, mqtt_data_event_handler));
 
   ESP_ERROR_CHECK_WITHOUT_ABORT(mqtt_module_set_address_cfg(mqtt_module, &addr_cfg));
-  struct mqtt_credentials_config cred_cfg = {
+  mqtt_credentials_config cred_cfg = {
       .username = MQTT_USERNAME,
   };
   ESP_ERROR_CHECK_WITHOUT_ABORT(mqtt_module_set_credentials_cfg(mqtt_module, &cred_cfg));
-  struct mqtt_auth_config auth_cfg = {
+  mqtt_verification_config verif_cfg = {
+      .certificate = (const char *)root_cert_pem_start,
+  };
+  ESP_ERROR_CHECK_WITHOUT_ABORT(mqtt_module_set_verification_cfg(mqtt_module, &verif_cfg));
+  mqtt_auth_config auth_cfg = {
       .password = MQTT_PASSWORD,
+      .certificate = (const char *)client_crt_start,
+      .key = (const char *)client_key_start,
   };
   ESP_ERROR_CHECK_WITHOUT_ABORT(mqtt_module_set_authentication_cfg(mqtt_module, &auth_cfg));
-  struct mqtt_session_config sesh_cfg = {
+  mqtt_session_config sesh_cfg = {
       .disable_clean_session = true,
+
   };
   ESP_ERROR_CHECK_WITHOUT_ABORT(mqtt_module_set_session_cfg(mqtt_module, &sesh_cfg));
   ESP_ERROR_CHECK_WITHOUT_ABORT(mqtt_module_connect(mqtt_module, 15000));
@@ -577,17 +613,21 @@ task_sound_sampling(void *arg) {
   char rms_text[32];
   char max_text[32];
   char min_text[32];
-  float rms_value = 0.0f;
-  float rms_max_value = 0.0f;
-  float rms_min_value = 0.0f;
+  float rms = 0.0f;
+  float max_rms = 0.0f;
+  float min_rms = 0.0f;
+  float max_rms_temp = -FLT_MAX;
+  float min_rms_temp = FLT_MAX;
 
   uint32_t accumulator_value = 0ULL;
   uint32_t values_count = 0ULL;
 
   uint64_t prev_calc_timestamp_us = 0ULL;
+  uint64_t prev_minmax_timestamp_us = 0ULL;
   uint64_t prev_report_timestamp_us = 0ULL;
 
   uint64_t calc_period_us = ADC_SOUND_SENSOR_CALC_PERIOD_MS * 1000ULL;
+  uint64_t minmax_period_us = ADC_SOUND_SENSOR_MINMAX_PERIOD_MS * 1000ULL;
   uint64_t report_period_us = ADC_SOUND_SENSOR_REPORT_PERIOD_MS * 1000ULL;
 
   uint64_t delay_ms = (uint64_t)ADC_SOUND_SENSOR_TASK_PERIOD_MS;
@@ -604,13 +644,24 @@ task_sound_sampling(void *arg) {
     if ((curr_timestamp_us - prev_calc_timestamp_us) >= calc_period_us) {
       prev_calc_timestamp_us = curr_timestamp_us;
 
-      rms_value = (values_count) ? sqrt(accumulator_value / values_count) : 0.0f;
+      rms = (values_count) ? sqrt(accumulator_value / values_count) : 0.0f;
+
+      max_rms_temp = max(rms, max_rms_temp);
+      min_rms_temp = min(rms, min_rms_temp);
+
       samples_read = 0U;
       accumulator_value = 0U;
       values_count = 0U;
+    }
 
-      rms_max_value = max(rms_value, rms_max_value);
-      rms_min_value = min(rms_value, rms_min_value);
+    if ((curr_timestamp_us - prev_minmax_timestamp_us) >= minmax_period_us) {
+      prev_minmax_timestamp_us = curr_timestamp_us;
+
+      max_rms = max(max_rms_temp, max_rms);
+      min_rms = min(min_rms_temp, min_rms);
+
+      max_rms_temp = -FLT_MAX;
+      min_rms_temp = FLT_MAX;
     }
 
     if ((curr_timestamp_us - prev_report_timestamp_us) >= report_period_us) {
@@ -621,22 +672,22 @@ task_sound_sampling(void *arg) {
       strncpy(payload.fields[0].name, "rms_max_sound", SENSOR_FIELD_NAME_LEN - 1);
       payload.fields[0].name[SENSOR_FIELD_NAME_LEN - 1] = '\0';
       payload.fields[0].type = SENSOR_FIELD_DATATYPE_FLOAT;
-      payload.fields[0].value.f = rms_max_value;
+      payload.fields[0].value.f = max_rms;
 
       strncpy(payload.fields[1].name, "rms_min_sound", SENSOR_FIELD_NAME_LEN - 1);
       payload.fields[1].name[SENSOR_FIELD_NAME_LEN - 1] = '\0';
       payload.fields[1].type = SENSOR_FIELD_DATATYPE_FLOAT;
-      payload.fields[1].value.f = rms_min_value;
+      payload.fields[1].value.f = min_rms;
 
       strncpy(payload.fields[2].name, "rms_sound", SENSOR_FIELD_NAME_LEN - 1);
       payload.fields[2].name[SENSOR_FIELD_NAME_LEN - 1] = '\0';
       payload.fields[2].type = SENSOR_FIELD_DATATYPE_FLOAT;
-      payload.fields[2].value.f = rms_value;
+      payload.fields[2].value.f = rms;
 
       strncpy(payload.fields[3].name, "win_s", SENSOR_FIELD_NAME_LEN - 1);
       payload.fields[3].name[SENSOR_FIELD_NAME_LEN - 1] = '\0';
       payload.fields[3].type = SENSOR_FIELD_DATATYPE_UINT;
-      payload.fields[3].value.u = (uint64_t)(ADC_SOUND_SENSOR_REPORT_PERIOD_MS / 1000ULL);
+      payload.fields[3].value.u = (uint64_t)(ADC_SOUND_SENSOR_MINMAX_PERIOD_MS / 1000ULL);
 
       payload.field_count = 4U;
 
@@ -646,18 +697,18 @@ task_sound_sampling(void *arg) {
         ESP_LOGI(TAG, "Sent data from sound sensor task");
       }
 
-      snprintf(rms_text, sizeof(rms_text), "Sound RMS:%.1f", rms_value);
+      snprintf(rms_text, sizeof(rms_text), "Sound RMS:%.1f", rms);
       grid_composer_draw_descriptor draw_desc_lux = GRID_COMPOSER_TEXT_DESCRIPTOR(
           0U, 2U, 0U, 0U, GRID_COMPOSER_V_ALIGN_TOP, GRID_COMPOSER_H_ALIGN_LEFT, rms_text, u8g2_font_7x14_tf, SH110X_WHITE, true);
       ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_lux, 1000U));
 
-      snprintf(min_text, sizeof(min_text), "Min:%.1f", rms_min_value);
+      snprintf(min_text, sizeof(min_text), "Min:%.1f", min_rms);
       grid_composer_draw_descriptor draw_desc_min =
           GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 2U, 0U, 24U, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_LEFT, min_text,
                                         u8g2_font_7x14_tf, SH110X_WHITE, false);
       ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_min, 1000U));
 
-      snprintf(max_text, sizeof(max_text), "Max:%.1f", rms_max_value);
+      snprintf(max_text, sizeof(max_text), "Max:%.1f", max_rms);
       grid_composer_draw_descriptor draw_desc_max =
           GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 2U, 0U, 48U, GRID_COMPOSER_V_ALIGN_BOTTOM, GRID_COMPOSER_H_ALIGN_LEFT, max_text,
                                         u8g2_font_7x14_tf, SH110X_WHITE, false);
@@ -680,11 +731,13 @@ task_tsl2591_sampling(void *arg) {
   float lux = 0.0f;
   float max_lux = 0.0f;
   float min_lux = 0.0f;
+  float max_lux_temp = -FLT_MAX;
+  float min_lux_temp = FLT_MAX;
 
   uint64_t prev_calc_timestamp_us = 0ULL;
   uint64_t prev_report_timestamp_us = 0ULL;
 
-  uint64_t calc_period_us = (uint64_t)(TSL2591_CALC_PERIOD_MS * 1000ULL);
+  uint64_t minmax_period_us = (uint64_t)(TSL2591_MINMAX_PERIOD_MS * 1000ULL);
   uint64_t report_period_us = (uint64_t)(TSL2591_REPORT_PERIOD_MS * 1000ULL);
 
   uint64_t delay_ms = (uint64_t)(TSL2591_TASK_PERIOD_MS);
@@ -695,13 +748,20 @@ task_tsl2591_sampling(void *arg) {
     uint32_t full = lum & 0xFFFF;
 
     lux = tsl2591.calculateLux(full, ir);
+    lux = ((lux < FLT_MAX) && (lux > -FLT_MAX)) ? lux : 0.0f;
+
+    max_lux_temp = max(lux, max_lux_temp);
+    min_lux_temp = min(lux, min_lux_temp);
 
     uint64_t curr_timestamp_us = (uint64_t)esp_timer_get_time();
-    if ((curr_timestamp_us - prev_calc_timestamp_us) >= calc_period_us) {
+    if ((curr_timestamp_us - prev_calc_timestamp_us) >= minmax_period_us) {
       prev_calc_timestamp_us = curr_timestamp_us;
 
-      max_lux = max(lux, max_lux);
-      min_lux = min(lux, min_lux);
+      max_lux = max(max_lux_temp, max_lux);
+      min_lux = min(min_lux_temp, min_lux);
+
+      max_lux_temp = -FLT_MAX;
+      min_lux_temp = FLT_MAX;
     }
 
     if ((curr_timestamp_us - prev_report_timestamp_us) >= report_period_us) {
@@ -727,7 +787,7 @@ task_tsl2591_sampling(void *arg) {
       strncpy(payload.fields[3].name, "win_s", SENSOR_FIELD_NAME_LEN - 1);
       payload.fields[3].name[SENSOR_FIELD_NAME_LEN - 1] = '\0';
       payload.fields[3].type = SENSOR_FIELD_DATATYPE_UINT;
-      payload.fields[3].value.u = (uint64_t)(TSL2591_CALC_PERIOD_MS / 1000ULL);
+      payload.fields[3].value.u = (uint64_t)(TSL2591_MINMAX_PERIOD_MS / 1000ULL);
 
       payload.field_count = 4U;
 
@@ -736,46 +796,46 @@ task_tsl2591_sampling(void *arg) {
       } else {
         ESP_LOGI(TAG, "Sent data from tsl2591 task");
       }
+      snprintf(lux_text, sizeof(lux_text), "Lux:%.4f", lux);
+      grid_composer_draw_descriptor draw_desc_lux = GRID_COMPOSER_TEXT_DESCRIPTOR(
+          0U, 1U, 0U, 0U, GRID_COMPOSER_V_ALIGN_TOP, GRID_COMPOSER_H_ALIGN_LEFT, lux_text, u8g2_font_7x14_tf, SH110X_WHITE, true);
+      ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_lux, 1000U));
+
+      snprintf(min_text, sizeof(min_text), "Min:%.4f", min_lux);
+      grid_composer_draw_descriptor draw_desc_min =
+          GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 1U, 0U, 24U, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_LEFT, min_text,
+                                        u8g2_font_7x14_tf, SH110X_WHITE, false);
+      ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_min, 1000U));
+
+      snprintf(max_text, sizeof(max_text), "Max:%.4f", max_lux);
+      grid_composer_draw_descriptor draw_desc_max =
+          GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 1U, 0U, 48U, GRID_COMPOSER_V_ALIGN_BOTTOM, GRID_COMPOSER_H_ALIGN_LEFT, max_text,
+                                        u8g2_font_7x14_tf, SH110X_WHITE, false);
+      ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_max, 1000U));
     }
-
-    snprintf(lux_text, sizeof(lux_text), "Lux:%.1f", lux);
-    grid_composer_draw_descriptor draw_desc_lux = GRID_COMPOSER_TEXT_DESCRIPTOR(
-        0U, 1U, 0U, 0U, GRID_COMPOSER_V_ALIGN_TOP, GRID_COMPOSER_H_ALIGN_LEFT, lux_text, u8g2_font_7x14_tf, SH110X_WHITE, true);
-    ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_lux, 1000U));
-
-    snprintf(min_text, sizeof(min_text), "Min:%.1f", min_lux);
-    grid_composer_draw_descriptor draw_desc_min =
-        GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 1U, 0U, 24U, GRID_COMPOSER_V_ALIGN_CENTER, GRID_COMPOSER_H_ALIGN_LEFT, min_text,
-                                      u8g2_font_7x14_tf, SH110X_WHITE, false);
-    ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_min, 1000U));
-
-    snprintf(max_text, sizeof(max_text), "Max:%.1f", max_lux);
-    grid_composer_draw_descriptor draw_desc_max =
-        GRID_COMPOSER_TEXT_DESCRIPTOR(0U, 1U, 0U, 48U, GRID_COMPOSER_V_ALIGN_BOTTOM, GRID_COMPOSER_H_ALIGN_LEFT, max_text,
-                                      u8g2_font_7x14_tf, SH110X_WHITE, false);
-    ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw_desc_max, 1000U));
 
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
   }
 }
 void
-task_bme690_sampling(void *arg) {
+task_air_quality_sampling(void *arg) {
   sensor_payload_t payload;
-  strncpy(payload.sensor, "bme690", SENSOR_NAME_MAX_LEN - 1);
+  strncpy(payload.sensor, "air_quality", SENSOR_NAME_MAX_LEN - 1);
   payload.sensor[SENSOR_NAME_MAX_LEN - 1] = '\0';
 
   char humid_text[32];
   char temp_text[32];
   char iaq_text[32];
+  float bmp180_temp = 0.0f;
   float temp = 0.0f;
   float humid = 0.0f;
   float iaq = 0.0f;
 
   uint64_t prev_report_timestamp_us = 0ULL;
 
-  uint64_t report_period_us = BME690_REPORT_PERIOD_MS * 1000ULL;
+  uint64_t report_period_us = AIR_QUALITY_REPORT_PERIOD_MS * 1000ULL;
 
-  uint64_t delay_ms = (uint64_t)BME690_TASK_PERIOD_MS;
+  uint64_t delay_ms = (uint64_t)AIR_QUALITY_TASK_PERIOD_MS;
   for (;;) {
     const bsecOutputs *outputs;
     if (!bme690_bsec.run()) {
@@ -803,7 +863,9 @@ task_bme690_sampling(void *arg) {
         value_type = SENSOR_FIELD_DATATYPE_FLOAT;
         payload.fields[field_index].value.f = outputs->outputChnls[i].signal;
 
-        temp = outputs->outputChnls[i].signal;
+        bmp180_temp = bmp180.readTemperature();
+
+        temp = (outputs->outputChnls[i].signal + bmp180_temp) / 2.0f;
         break;
       case BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY:
         value_name = "humid";
@@ -931,6 +993,7 @@ void
 task_sensor_data_aggregation(void *arg) {
   sensor_payload_t payloads[DATA_AGGREGATION_MAX_PAYLOADS];
 
+  uint32_t prev_buffer_size = 0U;
   for (;;) {
     uint32_t payloads_received = 0U;
     mqtt_message *msg = NULL;
@@ -950,10 +1013,16 @@ task_sensor_data_aggregation(void *arg) {
 
       cbor_encoder_create_array(&map_data, &sensors_array, DATA_AGGREGATION_MAX_PAYLOADS);
 
+      prev_buffer_size = cbor_encoder_get_buffer_size(&sensors_array, msg->buffer);
       while (payloads_received < DATA_AGGREGATION_MAX_PAYLOADS &&
              (xQueueReceive(data_aggregation_queue_handle, &payloads[payloads_received], portMAX_DELAY) == pdTRUE)) {
         ESP_RETURN_VOID_ON_ERROR(encode_sensor_payload(&payloads[payloads_received], &sensors_array), TAG,
                                  "Failed to encode a sensor payload");
+
+        uint32_t buffer_size = cbor_encoder_get_buffer_size(&sensors_array, msg->buffer);
+        uint32_t encoded_size = buffer_size - prev_buffer_size;
+        prev_buffer_size = buffer_size;
+        ESP_LOGI(TAG, "Encoded a payload, sensor:%s size:%lu", payloads[payloads_received].sensor, encoded_size);
         payloads_received++;
       }
 
@@ -961,10 +1030,9 @@ task_sensor_data_aggregation(void *arg) {
       cbor_encoder_close_container(&map_outer, &map_data);
       cbor_encoder_close_container(&encoder, &map_outer);
 
-      uint32_t encoded_len = cbor_encoder_get_buffer_size(&encoder, msg->buffer);
-      msg->length = encoded_len;
+      msg->length = cbor_encoder_get_buffer_size(&encoder, msg->buffer);
 
-      ESP_LOGI(TAG, "Encoded an mqtt payload, length:%lu, sensor payloads:%lu", encoded_len, payloads_received);
+      ESP_LOGI(TAG, "Encoded an mqtt payload, length:%lu, sensor payloads:%lu", msg->length, payloads_received);
 
       if (xQueueSend(mqtt_filled_queue, &msg, pdMS_TO_TICKS(1000U)) != pdTRUE) {
         ESP_LOGW(TAG, "Filled queue full, dropping msg");
