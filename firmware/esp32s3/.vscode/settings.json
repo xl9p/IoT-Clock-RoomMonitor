@@ -118,6 +118,6 @@
     "grid_composer_renderer.h": "c",
     "chrono": "cpp"
   },
-  "idf.flashType": "UART",
+  "idf.flashType": "JTAG",
   "idf.port": "/dev/ttyACM0"
 }
