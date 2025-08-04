@@ -76,44 +76,44 @@ A list of required materials and their costs are listed.
       
 | Product | Quantity | Link  | Description | Price (SEK) |
 | :---         |     ---:       | :--- | :--- | ---: |
-| Waveshare ESP32-S3 Zero | 1 | [Electrokit](https://www.electrokit.com/utvecklingskort-esp32-s3) | This is the brain of the project, it will do all heavy lifting required to control the sensors, displays and the whole application flow. It boasts two Xtensa LX7 cores, running on up to 240MHz. It has plenty of SRAM, 512KB to be precise, with the addition of 2MB of PSRAM (can be used as RAM (almost)). The list of peripherals also includes a WiFi and a Bluetooth peripherals, making it perfect for low-cost prototyping. | 99 |
-| Adafruit TSL2591 | 1 | [Electrokit](https://www.electrokit.com/tsl2591-digital-ljussensor-monterad-pa-kort) | A high dynamic range luminosity sensor, the measurements provided are in lux. Has adjustable measurement integration time and signal gain, together these characteristics position it as a good option for luminosity measurements in low-light environments. Since it includes an on-board regulator, it supports input voltages from 3.3V to 5V. | 109 |
-| Bosch BME690 Shuttle Board 3.0 | 1 | [DigiKey](https://www.digikey.se/en/products/detail/bosch-sensortec/SHUTTLE-BOARD-3-0-BME690/25835546) | Successor to BME688, functions as a gas, temperature and humidity sensor. Doesn't have an on-board regulator, therefore requires one. The input voltage to the sensor is 3.3V. For some reason the packaging uses 1.27mm pin headers, thus an adapter is required. | 191 |
-| Switchregulator step-down 0.8V - 17V 1.5A | 2 | [Electrokit](https://www.electrokit.com/switchregulator-step-down-0.8v-17v) | A step-down switching voltage regulator, supports a wide range of input values and adjustable output values. Maximum output current is 1.5A, rated efficiency is up-to 97.5%. | 58 |
-| AZDelivery GY-MAX4466 | 1 | [Amazon](https://www.amazon.se/AZDelivery-GY-MAX4466-Mikrofonf%C3%B6rst%C3%A4rkare-kompatibel-Raspberry/dp/B08T1L9Y7F) | A simple breakout board that includes an electret microphone and an amplifier stage with adjustable gain.  | 64 |
-| AZDelivery 1.3-inch OLED 128 x 64 pixels I2C-screen | 4 | [Amazon](https://www.amazon.se/AZDelivery-I2C-sk%C3%A4rm-kompatibel-Raspberry-inklusive/dp/B07V9SLQ6W) | Portable 1.3-inch OLED screens based on SH1106 display controller. Use I2C to communicate. In my personal experience, the displays are very sensitive to power supply quality and quality of the connection that they make. | 300 |
-| AZDelivery PCA9548A I2C multiplexer | 1 | [Amazon](https://www.amazon.se/AZDelivery-PCA9548A-multiplexer-8-kanals-kompatibel/dp/B086W7SL63) | A highly customizeable, 8-channel I2C multiplexer. It is very easy to use and it plays a very important role in getting the displays to work, by allowing multiple displays that have the same I2C address, to be on the same I2C bus.   | 89 |
+| Waveshare ESP32-S3 Zero | 1 | [Electrokit](https://www.electrokit.com/utvecklingskort-esp32-s3) | This is the brain of the project, it will do all heavy lifting required to control the sensors, displays and the whole application flow. It boasts two **Xtensa LX7** cores, running on up to **240MHz**. It has plenty of **SRAM**, **512KB** to be precise, with the addition of **2MB** of **PSRAM** (can be used as RAM (almost)). The list of peripherals also includes a **WiFi** and a **Bluetooth** peripherals, making it perfect for low-cost prototyping. | 99 |
+| Adafruit TSL2591 | 1 | [Electrokit](https://www.electrokit.com/tsl2591-digital-ljussensor-monterad-pa-kort) | A high dynamic range luminosity sensor, the measurements provided are in lux. Has adjustable **measurement integration time** and **signal gain**, together these characteristics position it as a good option for luminosity measurements in low-light environments. Since it includes an on-board regulator, it supports input voltages from 3.3V to 5V. | 109 |
+| Bosch BME690 Shuttle Board 3.0 | 1 | [DigiKey](https://www.digikey.se/en/products/detail/bosch-sensortec/SHUTTLE-BOARD-3-0-BME690/25835546) | A successor to **BME688**, functions as a **gas**, **temperature** and **humidity** sensor. Doesn't have an on-board regulator, therefore requires one. The input voltage to the sensor is 3.3V. For some reason the packaging uses 1.27mm pin headers, thus an adapter is required. | 191 |
+| Switchregulator step-down 0.8V - 17V 1.5A | 2 | [Electrokit](https://www.electrokit.com/switchregulator-step-down-0.8v-17v) | A step-down switching voltage regulator, supports a wide range of input values and adjustable output values. Maximum output current is **1.5A**, rated efficiency is up-to **97.5%**. | 58 |
+| AZDelivery GY-MAX4466 | 1 | [Amazon](https://www.amazon.se/AZDelivery-GY-MAX4466-Mikrofonf%C3%B6rst%C3%A4rkare-kompatibel-Raspberry/dp/B08T1L9Y7F) | A simple breakout board that includes an **electret microphone** and an **amplifier stage** with **adjustable gain**.  | 64 |
+| AZDelivery 1.3-inch OLED 128 x 64 pixels I2C-screen | 4 | [Amazon](https://www.amazon.se/AZDelivery-I2C-sk%C3%A4rm-kompatibel-Raspberry-inklusive/dp/B07V9SLQ6W) | Portable **1.3-inch OLED** screens based on **SH1106 display controller**. Use **I2C** to communicate. In my personal experience, the displays are very sensitive to power supply quality and quality of the connection that they make. | 300 |
+| AZDelivery PCA9548A I2C multiplexer | 1 | [Amazon](https://www.amazon.se/AZDelivery-PCA9548A-multiplexer-8-kanals-kompatibel/dp/B086W7SL63) | A highly customizeable, **8-channel** **I2C** **multiplexer**. It is very easy to use and it plays a very important role in getting the displays to work, by allowing multiple displays that have the same **I2C address**, to be on the same **I2C bus**.   | 89 |
 | Breadboard | 2 | [Electrokit](https://www.electrokit.com/kopplingsdack-840-anslutningar) |  | 138 |
 | 1.27mm connectors | 1| [Amazon](https://www.amazon.se/-/en/world-trading-net-Miniature-Connectors-Connector-Varnished/dp/B0D5XXTCMS/) | | 130 |
 | 1.27mm to 2.54mm breakout | 1| [Amazon](https://www.amazon.se/1-27Mm-2-54Mm-Breakout-Adapter-10pcs/dp/B0C8T5JD4F/) | | 70 |
 | Total price | | | | 1248 |
 
-The total cost of the project will vary depending on which components are already available and how closely one intends to replicate the original design. For example, the BME690 sensor can be substituted with a more accessible alternative, such as the BME688 or BME680. Doing so may also eliminate the need for additional components like a 1.27mm to 2.54mm adapter, reducing related costs.
+The total cost of the project will vary depending on which components are already available and how closely one intends to replicate the original design. For example, the **BME690** sensor can be substituted with a more accessible alternative, such as the **BME688** or **BME680**. Doing so may also eliminate the need for additional components like a 1.27mm to 2.54mm adapter, reducing related costs.
 
 Likewise, opting to use only a single screen for displaying the clock can help free up part of the budget as well.
 
 # Setup
 
-To connect your ESP32-S3 to your computer and upload code to it the following editors are recommended.
+To connect your **ESP32-S3** to your computer and upload code to it the following editors are recommended.
 
 | Editor | Description |
 | :--- | :---|
 | [VS Code](https://code.visualstudio.com/) | Used in this project. It is very extensible but the setup process can be too volatile for a beginner. |
-| [Espressif-IDE](https://github.com/espressif/idf-eclipse-plugin/blob/master/README.md) | You can use a specifically developed IDE based on Eclipse IDE if you are more familliar with it or if you don't like VSCode, also setting up the build pipeline may be more straightforward. |
+| [Espressif-IDE](https://github.com/espressif/idf-eclipse-plugin/blob/master/README.md) | You can use a specifically developed IDE based on **Eclipse IDE** if you are more familliar with it or if you don't like **VSCode**, also setting up the build pipeline may be more straightforward. |
 
 ## Install the IDE
 ### VSCode
-To install VSCode follow the instructions provided here [Setting up Visual Studio Code](https://code.visualstudio.com/docs/setup/setup-overview).
+To install **VSCode** follow the instructions provided here [Setting up Visual Studio Code](https://code.visualstudio.com/docs/setup/setup-overview).
 
 ### Espressif-IDE
-To install Espressif-IDE follow the instructions provided by espressif [Espressif-IDE Installation](https://docs.espressif.com/projects/espressif-ide/en/latest/installation.html).
+To install **Espressif-IDE** follow the instructions provided by espressif [Espressif-IDE Installation](https://docs.espressif.com/projects/espressif-ide/en/latest/installation.html).
 
 ## Install the prerequisites (VSCode only)
 There is some extra setup required, it will help to isolate the project and its dependencies into discrete and manageable containers.
 ### WSL2 (Windows)
-The steps for installing WSL2 on Windows are described here by Microsoft [How to install Linux on Windows with WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
+The steps for installing **WSL2** on **Windows** are described here by Microsoft [How to install Linux on Windows with WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
  #### Configure udev rules
- In order to be able to flash the firmware onto the ESP32 device, you will need to configure `udev` rules.
+ In order to be able to flash the firmware onto the **ESP32** device, you will need to configure `udev` rules.
  To acomplish this repeat the following steps:
  - Press `Win` key, search for `Ubuntu` (assuming its the distribution you've installed previously) and run it
  - A terminal will open inside of the WSL, run `sudo apt update` to update the list of packages
@@ -122,16 +122,16 @@ The steps for installing WSL2 on Windows are described here by Microsoft [How to
  - Make sure that your user is part of the `plugdev` group by running `groups`, if not run `sudo usermod -aG plugdev $(whoami)`
  - To reload the `udev` rules use `sudo udevadm control --reload` and `sudo udevadm trigger` to trigger them
  #### Configure usbipd-win
- Since USB devices are not directly accessible inside of the WSL from Windows, you will need to use `usbipd-win` to pass them through.
+ Since USB devices are not directly accessible inside of the **WSL** from **Windows**, you will need to use `usbipd-win` to pass them through.
  This can be done in the following manner:
  - Download the driver here [usbipd-win](https://github.com/dorssel/usbipd-win/releases/tag/v5.1.0)
  - Run the installer, you may have to reboot your PC
  - Download a GUI convience tool from [WSL USB Manager](https://github.com/nickbeth/wsl-usb-manager) to make the usage more comfortable
- - After connecting the ESP32 it will be visible in the application, to flash software on the device: select the device, click bind and then attach. The device will be disconnect from Windows and attach itself to WSL
+ - After connecting the **ESP32** it will be visible in the application, to flash software on the device: select the device, click bind and then attach. The device will be disconnect from **Windows** and attach itself to **WSL**
 
 
 ### Docker Desktop
-Docker Desktop can be installed by following instructions outlined by Docker team [Install Docker Desktop on Windows](https://docs.docker.com/desktop/setup/install/windows-install/).
+**Docker Desktop** can be installed by following instructions outlined by Docker team [Install Docker Desktop on Windows](https://docs.docker.com/desktop/setup/install/windows-install/).
 ### Docker Desktop & VSCode integration
 VSCode has support for Docker integration in form of so called [Dev Containers](https://containers.dev/). It allows for creating and configuring Docker-integrated development environments, with all dependencies being installed only in the corresponding containers. You can install it as a part of the [Remote Development Extension Pack](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) for VSCode.
 
@@ -147,13 +147,13 @@ The configuration files to use will be provided in the repository, to summarize 
 ARG DOCKER_TAG=latest
 FROM espressif/idf:${DOCKER_TAG}
 ```
-Will pull the latest version of a pre-configured espressif/idf Docker image.
+Will pull the latest version of a pre-configured `espressif/idf` Docker image.
 
 ```dockerfile
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 ```
-Will set LC_ALL and LANG environment variables to C.UTF-8 which is used by the espidf build system.
+Will set `LC_ALL` and `LANG` environment variables to `C.UTF-8` which is used by the espidf build system.
 
 ```dockerfile
 RUN apt-get update -y && apt-get install udev -y
@@ -180,7 +180,7 @@ Will finish the setup by running the setup script and setting the entrypoint of 
 		}
 	}
 ```
-This will set a name for the container, configure the Docker image build process by using the Dockerfile that was created before and pass `release-v5.4` as a DOCKER_TAG argument.
+This will set a name for the container, configure the Docker image build process by using the `Dockerfile` that was created before and pass `release-v5.4` as a `DOCKER_TAG` argument.
 
 ```json
 	"customizations": {
@@ -201,7 +201,7 @@ This will set a name for the container, configure the Docker image build process
 		}
 	}
 ```
-This configuration will specify the VSCode extensions to pre-install and some configuration options required by the ESP-IDF VSCode extension.
+This configuration will specify the **VSCode** extensions to pre-install and some configuration options required by the **ESP-IDF VSCode extension**.
 
 
 ```json
@@ -220,7 +220,7 @@ This configuration will specify the VSCode extensions to pre-install and some co
  ]
 }
 ```
-Will pass a number of arguments to the Docker container, as well as specify the mounts that are required for Git and for the ESP-IDF VSCode extension.
+Will pass a number of arguments to the Docker container, as well as specify the mounts that are required for **Git** and for the **ESP-IDF VSCode extension**.
 </details>
 
 ## Setup project using VSCode
@@ -267,23 +267,22 @@ Total image size: 1092992 bytes (.bin may be padded larger)
 ```
 
 ### Flash the device
-After successfully building the project, the firmware needs to be uploaded onto the ESP32. This can be accomplished by following these instructions:
-- Connect ESP32S3 to the PC using an appropriate cable
+After successfully building the project, the firmware needs to be uploaded onto the **ESP32**. This can be accomplished by following these instructions:
+- Connect **ESP32-S3** to the PC using an appropriate cable
 - Open `WSL USB Manager` that you have downloaded previously
 - Locate the microcontroller in the list of all connected devices
 - Select the device, click `bind` and then `attach`
-- In VSCode press `F1` to open the Command Palette, from there select `ESP-IDF: Select Port to Use (COM, tty, usbserial)`. This should open a dropdown menu with all connected devices, find and select the microcontroller (often listed as `/dev/ttyACM0`).
-- In the Command Palette, select `ESP-IDF: Select Flash Method`, from the dropdown choose `UART` (`JTAG` is also available, but in my experience, it has been quite unstable).
-- Finally, in the Command Palette, find `ESP-IDF: Flash Your Project` option, it will initiate the flash process. If the process succeeded you will see the following print-out `[Flash]
-Flash Done ⚡️
-Flash has finished. You can monitor your device with 'ESP-IDF: Monitor command'`
+- In VSCode press `F1` to open the **Command Palette**, from there select `ESP-IDF: Select Port to Use (COM, tty, usbserial)`. This should open a dropdown menu with all connected devices, find and select the microcontroller (often listed as `/dev/ttyACM0`).
+- In the **Command Palette**, select `ESP-IDF: Select Flash Method`, from the dropdown choose `UART` (`JTAG` is also available, but in my experience, it has been quite unstable).
+- Finally, in the **Command Palette**, find `ESP-IDF: Flash Your Project` option, it will initiate the flash process. If the process succeeded you will see the following print-out 
+`[Flash] Flash Done ⚡️ Flash has finished. You can monitor your device with 'ESP-IDF: Monitor command'`
 
 
 # Putting everything together
-Assembling the device is pretty straightforward, since its mostly just power supplies, I2C and analogue sensors.
+Assembling the device is pretty straightforward, since its mostly just power supplies, **I2C** and **analogue** sensors.
 
 >[!CAUTION]
-> Care must be taken to avoid shorting the connections, especially VDD and GND.
+> Care must be taken to avoid shorting the connections, especially **VDD** and **GND**.
 > Always have a means to quickly shutdown the whole device.
 
 >[!NOTE]
@@ -298,18 +297,18 @@ Schematics describing the device are provided below.
 
 ### Sensors
 ![Sensors Schematic](https://raw.githubusercontent.com/xl9p/IoT-Clock-RoomMonitor/refs/heads/main/images/schematics/sensors_scheme.png)
-Most of the sensors include an onboard voltage regulator and are therefore connected directly to the 5V rail. The exceptions are the BME690 sensor and the MAX4466 microphone, which require a separate voltage regulator to step down the 5V supply to 3.3V.
+Most of the sensors include an onboard voltage regulator and are therefore connected directly to the 5V rail. The exceptions are the **BME690** sensor and the **MAX4466** microphone, which require a separate voltage regulator to step down the 5V supply to 3.3V.
 
 >[!NOTE]
 >The device requires a 5V power supply. This can come from any suitable source, in my case, I used a spare wall adapter that outputs 5V.
 
-The TSL2591, BMP180, and BME690 sensors all share the same I2C bus for communication with the microcontroller. In contrast, the MAX4466 microphone outputs a DC-coupled AC signal, which is sampled via the microcontroller’s ADC.
+The **TSL2591**, **BMP180**, and **BME690** sensors all share the same **I2C bus** for communication with the microcontroller. In contrast, the **MAX4466** microphone outputs a **DC-coupled AC signal**, which is sampled via the microcontroller’s **ADC**.
 
 ### Displays
 ![Displays Schematic](https://raw.githubusercontent.com/xl9p/IoT-Clock-RoomMonitor/refs/heads/main/images/schematics/displays_scheme.png)
-This schematic shows how the OLED displays are connected. The project uses four identical displays. Connecting them all directly to the same I2C bus would have caused conflicts, but this is resolved with the PCA9548A, an 8-channel I2C multiplexer. It allows control of each display by selectively passing the main I2C signal to one channel at a time, based on specific commands.
+This schematic shows how the OLED displays are connected. The project uses four identical displays. Connecting them all directly to the same **I2C bus** would have caused conflicts, but this is resolved with the **PCA9548A**, an 8-channel I2C multiplexer. It allows control of each display by selectively passing the main I2C signal to one channel at a time, based on specific commands.
 
-The A pins on the multiplexer determine its I2C address. In this setup, they are grounded, which sets the device address to 0x70.
+The A pins on the multiplexer determine its **I2C address**. In this setup, they are grounded, which sets the device address to `0x70`.
 
 As for power, the setup here is similar to the sensor section. All the connected devices tolerate 5V, so the displays are powered directly from the main 5V rail.
 
@@ -317,15 +316,15 @@ As for power, the setup here is similar to the sensor section. All the connected
 ![Complete Schematic](https://raw.githubusercontent.com/xl9p/IoT-Clock-RoomMonitor/refs/heads/main/images/schematics/complete_scheme.png)
 
 ## Power Consumption
-Using the Nordic Power Profiler Kit II, the current consumption of the fully assembled device was measured. The results indicate a fairly significant current draw. The highest average current occurs during the initial WiFi initialization and MQTT connection phase, peaking at around 92 mA. During normal operation, the current drops slightly, averaging approximately 63.5 mA.
+Using the Nordic Power Profiler Kit II, the current consumption of the fully assembled device was measured. The results indicate a fairly significant current draw. The highest average current occurs during the initial **WiFi initialization** and **MQTT connection** phases, peaking at around **92 mA**. During normal operation, the current drops slightly, averaging approximately **63.5 mA**.
 
-Although these values are somewhat high, there is room for optimization. For example, the ESP32’s light sleep mode and Dynamic Frequency Scaling (DFS) can be enabled to reduce power consumption. This can be pushed even further by utilizing the Ultra Low Power (ULP) co-processor and fine-tuning the data accumulation thresholds.
+Although these values are somewhat high, there is room for optimization. For example, the ESP32’s **light sleep** mode and **Dynamic Frequency Scaling** (**DFS**) can be enabled to reduce power consumption. This can be pushed even further by utilizing the **Ultra Low Power** (**ULP**) co-processor and fine-tuning the data accumulation thresholds.
 
 However, implementing these optimizations would require a significant time investment in the project.
 
 ![Current Cosumption](https://raw.githubusercontent.com/xl9p/IoT-Clock-RoomMonitor/refs/heads/main/images/plots/final-device-highlight-op-regions.png)
 
-The project uses the ESP-IDF framework to simplify system management and ensure timely sampling of the sensors. It also incorporates Arduino as an ESP-IDF component, enabling the use of various driver libraries. As a result, all firmware is written in C/C++.
+The project uses the **ESP-IDF** framework to simplify system management and ensure timely sampling of the sensors. It also incorporates **Arduino as an ESP-IDF component**, enabling the use of various driver libraries. As a result, all firmware is written in **C/C++**.
 
 Although most of the sensors are controlled using publicly available drivers, a considerable amount of custom code was written, mainly as wrappers around system drivers, and mostly for self-learning purposes.
 
@@ -336,7 +335,7 @@ No specific code samples will be discussed here, as it wouldn't add much value i
 
 This diagram outlines the main application logic. Sensor data is collected using specifically dedicated tasks. Each task checks a number of timing conditions to determine whether certain actions need to be taken. These actions include periodic calculations, Min/Max evaluations, telemetry display, and data transmission.
 
-To aggregate the data, sensor tasks send it in packaged sensor payload structures. These contain all the required information to later encode the data properly using CBOR. Since CBOR-encoded data is binary, sending it directly through FreeRTOS queues can be problematic. To handle this, the aggregation task and the MQTT task share two separate queues. These queues are used to rotate pointers to statically allocated binary buffers. The current implementation uses three such buffers, ensuring the aggregation task almost always has one available to fill.
+To aggregate the data, sensor tasks send it in packaged sensor payload structures. These contain all the required information to later encode the data properly using **CBOR**. Since CBOR-encoded data is binary, sending it directly through **FreeRTOS** queues can be problematic. To handle this, the aggregation task and the MQTT task share two separate queues. These queues are used to rotate pointers to statically allocated binary buffers. The current implementation uses three such buffers, ensuring the aggregation task almost always has one available to fill.
 
 Display control is handled by a module called `grid_composer`. The idea behind this module is to abstract display control in a grid-like manner, where each screen acts as a grid cell capable of showing arbitrary content. To enable this, the module defines an interface that each display must implement. This includes functions like `draw_figure`, `draw_text`, and `clear`. Each display is wrapped into this interface and added to an instance of the `grid_composer`.
 
@@ -353,6 +352,10 @@ To perform rendering, the module uses a data type called a **draw descriptor**, 
 | MQTT Task         | 1 | 8196 | 9  |
 | Draw Task         | 0 | 6144 | 20 |
 
+All sensor tasks share the same priority to allow the **RTOS** scheduler to use **round-robin scheduling**. The **aggregation task** has a higher priority, as it must process data promptly to prevent data loss or bottlenecks. All of these tasks run on the **first core**, while the **second core** is reserved for wireless transmission. **Stack sizes** were determined empirically.
+
+The **draw task** is initialized separately from the main initialization logic and is assigned a priority of **20** to ensure that screen updates remain highly responsive.
+
 ### Periodic actions of each task:
 | Task Name | Base loop period (ms) | Calculation period (ms)  | Min/Max period (ms) | Report period (ms) |
 | :---      |     ---:         | :---                | :---           | :---          |
@@ -361,13 +364,8 @@ To perform rendering, the module uses a data type called a **draw descriptor**, 
 | Air Quality Task  | 1500  |  -   | -       | 1500  |
 | Sound Sensor Task | 100   | 4000 | 3600000 | 4000  |
 
-All sensor tasks share the same priority to allow the RTOS scheduler to use round-robin scheduling. The aggregation task has a higher priority, as it must process data promptly to prevent data loss or bottlenecks. All of these tasks run on the first core, while the second core is reserved for wireless transmission. Stack sizes were determined empirically.
-
-The draw task is initialized separately from the main initialization logic and is assigned a priority of 20 to ensure that screen updates remain highly responsive.
-
-
 ## System Initialization
-The system starts by initializing all essential components in a specific order. This includes hardware peripherals such as I2C buses, the ADC module, sensors, displays, and WiFi. It also includes the necessary software components, such as the SNTP and MQTT clients, the grid_composer module, queues, buffers, and most importantly, the tasks themselves.
+The system starts by initializing all essential components in a specific order. This includes hardware peripherals such as **I2C** buses, the **ADC** module, sensors, displays, and **WiFi**. It also includes the necessary software components, such as the **SNTP** and **MQTT** clients, the `grid_composer` module, queues, buffers, and most importantly, the tasks themselves.
 
 Below are several UML flowcharts that describe the initialization procedures for each task.
 ## Sensor Tasks
@@ -392,24 +390,24 @@ Below are several UML flowcharts that describe the initialization procedures for
 
 
 # Platform
-I chose to use a private Linux server that I assembled from spare PC parts as my platform. It handles everything cloud-related necessary for data collection and visualization in this project. This includes an MQTT broker, the TIG stack, and a proxy server. There are many reasons behind this decision, but the main ones are the desire for full control over the services and the aim to avoid the limitations commonly imposed by popular IoT cloud platforms.
+I chose to use a private **Linux server** that I assembled from spare PC parts as my platform. It handles everything cloud-related necessary for data collection and visualization in this project. This includes an **MQTT broker**, the **TIG-stack**, and a proxy server. There are many reasons behind this decision, but the main ones are the desire for **full control** over the services and the aim to avoid the **limitations** commonly imposed by popular **IoT cloud platforms**.
 
-The server hosts an MQTT broker, specifically, the EMQX Community version. It is configured to run as a cluster of three nodes. The setup also includes a Redis credential store and a NestJS backend to manage MQTT clients.
+The server hosts an **MQTT broker**, specifically, the **EMQX Community** version. It is configured to run as a cluster of three nodes. The setup also includes a **Redis credential store** and a **NestJS backend** to manage **MQTT clients**.
 
-For data visualization, the solution relies on the TIG stack. The project uses a dedicated InfluxDB bucket and a Telegraf instance with a custom configuration to correctly parse incoming data. Grafana is used to visualize the data by connecting directly to the InfluxDB database.
+For data visualization, the solution relies on the **TIG-stack**. The project uses a dedicated **InfluxDB bucket** and a **Telegraf instance** with a custom configuration to correctly parse incoming data. **Grafana** is used to visualize the data by connecting directly to the **InfluxDB database**.
 
-An Nginx proxy sits in front of the EMQX cluster to enable SSL termination for mTLS support. Additionally, Nginx handles load balancing of incoming traffic between the nodes in the EMQX cluster.
+An **Nginx proxy** sits in front of the **EMQX cluster** to enable **SSL terminatio**n for **mTLS** support. Additionally, **Nginx** handles load balancing of incoming traffic between the nodes in the **EMQX cluster**.
 
-All the files needed to spin up your own local instance of the platform are included in the repository. This includes OpenSSL certificates, so there is no need to generate them manually.
+All the files needed to spin up your own local instance of the platform are included in the repository. This includes **OpenSSL** certificates, so there is no need to generate them manually.
 
 # Transmitting the data / connectivity
-Since the device is designed for use inside buildings, it’s common to have some form of WiFi coverage. Therefore, the device uses WiFi to send collected data to the server on the local network. This greatly simplifies development and also allows flexibility, as it’s possible to switch to a public MQTT broker if needed.
+Since the device is designed for use inside buildings, it’s common to have some form of **WiFi** coverage. Therefore, the device uses **WiFi** to send collected data to the server on the local network. This greatly simplifies development and also allows flexibility, as it’s possible to switch to a public MQTT broker if needed.
 
-Naturally, the chosen transport protocol is MQTT. MQTT is a machine-to-machine communication protocol with low overhead and extensive configuration options for controlling data transmission. It is especially popular in IoT applications. This project uses MQTT version 3.1.1 over port 8884. Although encryption isn’t strictly required for local deployment, the device still uses a set of pre-generated certificates to secure communication with the server.
+Naturally, the chosen transport protocol is **MQTT**. **MQTT** is a machine-to-machine communication protocol with low overhead and extensive configuration options for controlling data transmission. It is especially popular in IoT applications. This project uses **MQTT** version `3.1.1` over port `8884`. Although encryption isn’t strictly required for local deployment, the device still uses a set of pre-generated certificates to secure communication with the server.
 
-Considering the amount of data being sent, it is accumulated and sent only when it reaches a certain size threshold, rather than transmitting periodically. This approach helps maintain longer sleep periods and reduces the overhead of each transmission, both in terms of bandwidth and power consumption. Power efficiency is especially important because the initial connection setup, handshakes, and toggling WiFi are the main causes of high current draw on the ESP32. Even though the device is intended to be powered from a wall outlet, efficient power use remains critical. This strategy also lays the groundwork for converting the device to battery power in the future.
+Considering the amount of data being sent, it is accumulated and sent only when it reaches a certain size threshold, rather than transmitting periodically. This approach helps maintain longer sleep periods and reduces the overhead of each transmission, both in terms of bandwidth and power consumption. Power efficiency is especially important because the initial connection setup, handshakes, and toggling WiFi are the main causes of high current draw on the **ESP32**. Even though the device is intended to be powered from a wall outlet, efficient power use remains critical. This strategy also lays the groundwork for converting the device to battery power in the future.
 
-The same concerns about efficiency apply to network bandwidth, so the size of transmitted packets is minimized. For this reason, JSON was avoided as a transmission format. Instead, a more size-efficient alternative is used, **Concise Binary Object Representation** (CBOR). Based on RFC 8949, CBOR shares a similar data model with JSON and supports a wide range of data types. It offers relatively low encoding overhead at the cost of human readability.
+The same concerns about efficiency apply to network bandwidth, so the size of transmitted packets is minimized. For this reason, **JSON** was avoided as a transmission format. Instead, a more size-efficient alternative is used, **Concise Binary Object Representation** (**CBOR**). Based on [RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html), **CBOR** shares a similar data model with **JSON** and supports a wide range of data types. It offers relatively low encoding overhead at the cost of human readability.
 
 ---
 
@@ -576,20 +574,20 @@ The same concerns about efficiency apply to network bandwidth, so the size of tr
 
 </details>
 
-After minifying the payload, and base64 encoding it, the final size is around 2118 bytes.
+After **minifying** the payload, and **base64 encoding** it, the final size is around **2118 bytes**.
 
-For reference, the same payload encoded using CBOR results in just 1301 bytes, a **38.6% decrease** in size. This, however, will vary depending on the exact data used.
+For reference, the same payload **encoded using CBOR** results in just **1301 bytes**, a **38.6% decrease** in size. This, however, **will vary** depending on the exact data used.
 
 ---
 
-In practice, data is accumulated until 15 sensor packets are assembled. Each packet is encoded in a stream-like manner, resulting in an average transmission size of about 1.45 to 1.5 KiB. The number of packets per transmission can be adjusted up or down to suit specific needs. The interval between transmissions typically varies between 15 and 17 seconds, due to round-robin scheduling among the sensors and their individual data reporting periods.
+In practice, data is accumulated until **15 sensor packets** are assembled. Each packet is encoded in a stream-like manner, resulting in an average transmission size of about **1.45 to 1.5 KiB**. The number of packets per transmission can be adjusted up or down to suit specific needs. The interval between transmissions typically varies between **15 and 17 seconds**, due to round-robin scheduling among the sensors and their individual data reporting periods.
 
 # Presenting the data
-The data is stored in an InfluxDB time-series database. This choice came naturally since time-series databases are the preferred option for data with time-based characteristics. InfluxDB, in particular, is fast and, most importantly, accessible.
+The data is stored in an **InfluxDB time-series database**. This choice came naturally since time-series databases are the preferred option for data with time-based characteristics. **InfluxDB**, in particular, is **fast** and, most importantly, **accessible**.
 
-There is no automation involved beyond using Telegraf, which pulls data from the MQTT broker and parses it using a predefined configuration file. The parsed data is then sent to the InfluxDB database for storage.
+There is no automation involved beyond using **Telegraf**, which pulls data from the **MQTT broker** and parses it using a predefined configuration file. The parsed data is then sent to the **InfluxDB database** for storage.
 
-The dashboard is built using Grafana. It is composed of specifically dedicated dashboard components configured to visualize the data effectively.
+The dashboard is built using **Grafana**. It is composed of specifically dedicated dashboard components configured to visualize the data effectively.
 ## Full dashboard
 ![Full dashboard](https://raw.githubusercontent.com/xl9p/IoT-Clock-RoomMonitor/refs/heads/main/images/dashboard/full_panel.png)
 
@@ -607,7 +605,7 @@ The dashboard is built using Grafana. It is composed of specifically dedicated d
 
 
 # Finalizing the design
-Overall, I’m satisfied with how the project turned out. There is still plenty of room for improvement, things like code optimization, additional error debugging, power consumption improvements, and so on. I would also like to design a custom PCB using prototyping boards to improve signal integrity, and potentially use a 3D printer to create an enclosure.
+Overall, I’m satisfied with how the project turned out. There is still plenty of room for improvement, things like **code optimization**, **additional error debugging**, **power consumption improvements**, and so on. I would also like to design a **custom PCB** using prototyping boards to improve signal integrity, and potentially use a **3D printer** to create an enclosure.
 
 Although this is a beginner course, I gained not only technical knowledge but also a better understanding of myself throughout the process. Most importantly, I committed to finishing a project. I will probably make occasional improvements over time until I feel completely satisfied with it.
 
@@ -621,13 +619,7 @@ Below are some simple pictures and videos demonstrating how the project function
 
 ## Video Demonstrations
 ### First version
-<iframe width="800" height="500" src="https://www.youtube.com/embed/YibGUrIH6mc?si=sYMAHyqzEiHYGNi6" 
-frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-gyroscope; picture-in-picture" allowfullscreen></iframe>
-<!-- [First version demo](https://youtu.be/YibGUrIH6mc?si=5X3wSY4GCFQi1KCD) -->
+[First version demo](https://youtu.be/YibGUrIH6mc?si=sYMAHyqzEiHYGNi6)
 
 ### Final version
-<iframe width="800" height="500" src="https://www.youtube.com/embed/7gsQKSHX8e0?si=A7egEwnlTy4JavXE" 
-frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-gyroscope; picture-in-picture" allowfullscreen></iframe>
-<!-- [Final version demo](https://youtu.be/7gsQKSHX8e0?si=A7egEwnlTy4JavXE) -->
+[Final version demo](https://youtu.be/7gsQKSHX8e0?si=A7egEwnlTy4JavXE)
