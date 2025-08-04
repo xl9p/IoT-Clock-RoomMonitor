@@ -1,0 +1,39 @@
+version: "3"
+services:
+  influxdb:
+    image: influxdb:2.7-alpine
+    hostname: ${DOCKER_INFLUXDB_HOST}
+    volumes:
+      - /home/shtuk/docker-compose/tig-stack/influxdb-storage:/var/lib/influxdb2:rw
+    restart: on-failure:10
+    ports:
+      - ${DOCKER_INFLUXDB_PORT}:8086
+    networks:
+      - tig-net
+
+  telegraf:
+    image: telegraf:latest
+    volumes:
+      - ${DOCKER_TELEGRAF_CFG_PATH}:/etc/telegraf/telegraf.conf:rw
+    depends_on:
+      - influxdb
+    networks:
+      - tig-net
+      - emqx-net
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    volumes:
+      - /home/shtuk/docker-compose/tig-stack/grafana-storage:/var/lib/grafana:rw
+    depends_on:
+      - influxdb
+    ports:
+      - ${DOCKER_GRAFANA_PORT}:3000
+    networks:
+      - tig-net
+
+networks:
+  emqx-net:
+    external: true
+  tig-net:
+    external: true

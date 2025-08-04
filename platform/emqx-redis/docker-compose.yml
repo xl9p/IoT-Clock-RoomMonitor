@@ -1,0 +1,96 @@
+version: '3'
+services:
+  eqmx-main:
+    image: emqx/emqx:5.8
+    depends_on:
+      eqmx-redis:
+        condition: service_healthy
+      eqmx-redis-init:
+        condition: service_started
+    container_name: emqx-main
+    hostname: emqx-main-cluster.emqx.io
+    ports:
+      - 1883:1883
+      - 18083:18083
+      - 4370:4370
+    environment:
+      - EMQX_NODE__NAME=emqx-main@emqx-main-cluster.emqx.io
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[emqx-main@emqx-main-cluster.emqx.io,emqx-2@emqx-2-cluster.emqx.io,emqx-3@emqx-3-cluster.emqx.io]
+      - EMQX_DASHBOARD__DEFAULT_USERNAME=admin
+      - EMQX_DASHBOARD__DEFAULT_PASSWORD=${EMQX_DASHBOARD_DEFAULT_PASSWORD}
+      - EMQX_AUTHENTICATION__1__MECHANISM="password_based"
+      - EMQX_AUTHENTICATION__1__BACKEND="redis"
+      - EMQX_AUTHENTICATION__1__REDIS_TYPE="single"
+      - EMQX_AUTHENTICATION__1__SERVER="redis"
+      - EMQX_AUTHENTICATION__1__CMD="HMGET mqtt_user:$${username} password_hash salt is_superuser"
+
+
+    networks:
+      - emqx-net
+
+  emqx-2:
+    image: emqx/emqx:5.8
+    container_name: emqx-2
+    hostname: emqx-2-cluster.emqx.io
+    ports:
+      - 1884:1883
+
+    environment:
+      - EMQX_NODE__NAME=emqx-2@emqx-2-cluster.emqx.io
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[emqx-main@emqx-main-cluster.emqx.io,emqx-2@emqx-2-cluster.emqx.io,emqx-3@emqx-3-cluster.emqx.io]
+      - EMQX_AUTHENTICATION__1__MECHANISM="password_based"
+      - EMQX_AUTHENTICATION__1__BACKEND="redis"
+      - EMQX_AUTHENTICATION__1__REDIS_TYPE="single"
+      - EMQX_AUTHENTICATION__1__SERVER="redis"
+      - EMQX_AUTHENTICATION__1__CMD="HMGET mqtt_user:$${username} password_hash salt is_superuser"
+    networks:
+      - emqx-net
+
+  emqx-3:
+    image: emqx/emqx:5.8
+    container_name: emqx-3
+    hostname: emqx-3-cluster.emqx.io
+    ports:
+      - 1885:1883
+    environment:
+      - EMQX_NODE__NAME=emqx-3@emqx-3-cluster.emqx.io
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[emqx-main@emqx-main-cluster.emqx.io,emqx-2@emqx-2-cluster.emqx.io,emqx-3@emqx-3-cluster.emqx.io]
+      - EMQX_AUTHENTICATION__1__MECHANISM="password_based"
+      - EMQX_AUTHENTICATION__1__BACKEND="redis"
+      - EMQX_AUTHENTICATION__1__REDIS_TYPE="single"
+      - EMQX_AUTHENTICATION__1__SERVER="redis"
+      - EMQX_AUTHENTICATION__1__CMD="HMGET mqtt_user:$${username} password_hash salt is_superuser"
+    networks:
+      - emqx-net
+
+  eqmx-redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping", "|", "grep", "PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 2
+      start_period: 40s
+    networks:
+      emqx-net:
+        aliases:
+          - redis
+  eqmx-redis-init:
+    image: redis:latest
+    depends_on:
+      eqmx-redis:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["redis-cli", "-h", "redis", "HSET", "mqtt:test", "is_superuser", "0", "salt", "${EMQX_TEST_GLOBAL_SALT}","password_hash", "${EMQX_TEST_USER}"]
+    networks:
+      emqx-net:
+        aliases:
+          - redis-init
+networks:
+  emqx-net:
+    external: true
