@@ -1,5 +1,3 @@
-# file(GLOB_RECURSE ${CMAKE_SOURCE_DIR}/main/*.* ${CMAKE_SOURCE_DIR}/main/*/*.*)
-
 file(GLOB_RECURSE APP_SRCS
   "*.*"
 )

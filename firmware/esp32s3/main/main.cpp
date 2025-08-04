@@ -253,14 +253,22 @@ app_main() {
   init_sntp();
   init_mqtt();
 
-  data_aggregation_queue_handle = xQueueCreate(20U, sizeof(sensor_payload_t));
+  data_aggregation_queue_handle = xQueueCreate(DATA_AGGREGATION_MAX_PAYLOADS, sizeof(sensor_payload_t));
   if (NULL == data_aggregation_queue_handle) {
     ESP_LOGE(TAG, "Failed to initialize data_aggregation_queue");
     return;
   }
 
   mqtt_free_queue = xQueueCreate(MQTT_BUFFER_COUNT, sizeof(mqtt_message *));
+  if (NULL == mqtt_free_queue) {
+    ESP_LOGE(TAG, "Failed to initialize mqtt_free_queue");
+    return;
+  }
   mqtt_filled_queue = xQueueCreate(MQTT_BUFFER_COUNT, sizeof(mqtt_message *));
+  if (NULL == mqtt_filled_queue) {
+    ESP_LOGE(TAG, "Failed to initialize mqtt_filled_queue");
+    return;
+  }
 
   for (int i = 0; i < MQTT_BUFFER_COUNT; ++i) {
     mqtt_message *msg = &mqtt_buffers[i];
@@ -270,7 +278,7 @@ app_main() {
   xTaskCreatePinnedToCore(task_mqtt_sending, "mqtt tsk", 8196U, NULL, 9, &task_mqtt_sending_handle, 1U);
   xTaskCreatePinnedToCore(task_sensor_data_aggregation, "aggr tsk", 6144U, NULL, 8, &task_sensor_data_aggregation_handle, 0U);
 
-  xTaskCreatePinnedToCore(task_air_quality_sampling, "bme690 tsk", 3144U, NULL, 6, &task_air_quality_sampling_handle, 0U);
+  xTaskCreatePinnedToCore(task_air_quality_sampling, "air_quality tsk", 3144U, NULL, 6, &task_air_quality_sampling_handle, 0U);
   vTaskDelay(pdMS_TO_TICKS(10U * (task_jitter_random[0] & 0x00000001)));
   xTaskCreatePinnedToCore(task_tsl2591_sampling, "tsl2591 tsk", 3144U, NULL, 6, &task_tsl2591_sampling_handle, 0U);
   vTaskDelay(pdMS_TO_TICKS(10U * (task_jitter_random[1] & 0x00000001)));
@@ -291,19 +299,6 @@ app_main() {
     vPortFree(task_buffer);
 
     vTaskDelay(pdMS_TO_TICKS(4000U));
-
-    // grid_composer_draw_descriptor draw1 = {};
-
-    // draw1.cell_row = 0;
-    // draw1.cell_col = 0;
-    // draw1.draw_obj.fill = false;
-    // draw1.draw_obj.color = SH110X_WHITE;
-    // draw1.draw_obj.content_type = GRID_COMPOSER_CONTENT_TEXT;
-    // draw1.draw_obj.text.font = u8g2_font_helvR24_tn;
-    // draw1.draw_obj.text.h_align = GRID_COMPOSER_H_ALIGN_LEFT;
-    // draw1.draw_obj.text.v_align = GRID_COMPOSER_V_ALIGN_TOP;
-    // draw1.draw_obj.text.text = "456";
-    // ESP_ERROR_CHECK_WITHOUT_ABORT(grid_composer_draw_queue_send(grid_composer, &draw1, 10000));
   }
 }
 
@@ -849,6 +844,9 @@ task_air_quality_sampling(void *arg) {
       vTaskDelay(pdMS_TO_TICKS(delay_ms));
       continue;
     }
+
+    bmp180_temp = bmp180.readTemperature();
+
     size_t field_index = 0;
     for (uint8_t i = 0; i < outputs->nOutputChnls; i++) {
       if (field_index >= SENSOR_MAX_FIELDS)
@@ -862,8 +860,6 @@ task_air_quality_sampling(void *arg) {
         value_name = "temp";
         value_type = SENSOR_FIELD_DATATYPE_FLOAT;
         payload.fields[field_index].value.f = outputs->outputChnls[i].signal;
-
-        bmp180_temp = bmp180.readTemperature();
 
         temp = (outputs->outputChnls[i].signal + bmp180_temp) / 2.0f;
         break;
@@ -908,9 +904,9 @@ task_air_quality_sampling(void *arg) {
 
       if (field_index) {
         if (xQueueSend(data_aggregation_queue_handle, &payload, pdMS_TO_TICKS(TASK_QUEUE_SEND_TIMEOUT_MS)) != pdTRUE) {
-          ESP_LOGE(TAG, "Failed sending from bme690 task");
+          ESP_LOGE(TAG, "Failed sending from air quality task");
         } else {
-          ESP_LOGI(TAG, "Sent data from bme690 task");
+          ESP_LOGI(TAG, "Sent data from air quality task");
         }
       }
 
@@ -993,8 +989,8 @@ void
 task_sensor_data_aggregation(void *arg) {
   sensor_payload_t payloads[DATA_AGGREGATION_MAX_PAYLOADS];
 
-  uint32_t prev_buffer_size = 0U;
   for (;;) {
+    uint32_t prev_buffer_size = 0U;
     uint32_t payloads_received = 0U;
     mqtt_message *msg = NULL;
     if (xQueueReceive(mqtt_free_queue, &msg, portMAX_DELAY) == pdTRUE) {

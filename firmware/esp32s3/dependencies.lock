@@ -47,12 +47,6 @@ dependencies:
       path: /workspaces/IoT-Clock-RoomMonitor/firmware/esp32s3/components/BSEC3Library
       type: local
     version: 0.0.1
-  DHT-Sensor-Library:
-    dependencies: []
-    source:
-      path: /workspaces/IoT-Clock-RoomMonitor/firmware/esp32s3/components/DHT-Sensor-Library
-      type: local
-    version: 0.0.1
   U8g2_for_Adafruit_GFX:
     dependencies: []
     source:
@@ -545,7 +539,6 @@ direct_dependencies:
 - espressif/Adafruit_TSL2591
 - espressif/BME69xLibrary
 - espressif/BSEC3Library
-- espressif/DHT-Sensor-Library
 - espressif/U8g2_for_Adafruit_GFX
 - espressif/adc_module
 - espressif/arduino-esp32
@@ -555,6 +548,6 @@ direct_dependencies:
 - espressif/sntp_module
 - espressif/wifi_module
 - idf
-manifest_hash: ba20a0dcc926e368767c81e6a43c9120f1a8de1198f4ede040249515f844c954
+manifest_hash: 4df81cae005467407c104853f85e6846b472dbd30ac957983b0dff45cd45c89c
 target: esp32s3
 version: 2.0.0
