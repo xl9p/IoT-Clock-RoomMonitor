@@ -729,7 +729,7 @@ task_tsl2591_sampling(void *arg) {
   float max_lux_temp = -FLT_MAX;
   float min_lux_temp = FLT_MAX;
 
-  uint64_t prev_calc_timestamp_us = 0ULL;
+  uint64_t prev_minmax_timestamp_us = 0ULL;
   uint64_t prev_report_timestamp_us = 0ULL;
 
   uint64_t minmax_period_us = (uint64_t)(TSL2591_MINMAX_PERIOD_MS * 1000ULL);
@@ -749,8 +749,8 @@ task_tsl2591_sampling(void *arg) {
     min_lux_temp = min(lux, min_lux_temp);
 
     uint64_t curr_timestamp_us = (uint64_t)esp_timer_get_time();
-    if ((curr_timestamp_us - prev_calc_timestamp_us) >= minmax_period_us) {
-      prev_calc_timestamp_us = curr_timestamp_us;
+    if ((curr_timestamp_us - prev_minmax_timestamp_us) >= minmax_period_us) {
+      prev_minmax_timestamp_us = curr_timestamp_us;
 
       max_lux = max(max_lux_temp, max_lux);
       min_lux = min(min_lux_temp, min_lux);
